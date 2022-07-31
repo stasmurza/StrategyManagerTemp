@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json.schemastore.org/launchsettings.json",
+  "iisSettings": {
+    "windowsAuthentication": false,
+    "anonymousAuthentication": true,
+    "iisExpress": {
+      "applicationUrl": "http://localhost:22273",
+      "sslPort": 44332
+    }
+  },
+  "profiles": {
+    "StrategyManager.WebApi": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "launchUrl": "swagger",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "EVENT_STORE_CONNECTION_STRING": "mongodb://localhost:27017",
+        "EVENT_STORE_DATABASE_NAME": "Strategy_manager_event_store",
+        "JWT_SECRET": "d14c7bc2-c7bc-447f-b8bc-aa1fd353042f",
+        "JWT_EXPIRATION_TIME_MINUTES": "2000",
+        "SMTP_HOST": "enter_host",
+        "SMTP_PORT": "1000",
+        "SMTP_LOGIN": "enter_login",
+        "SMTP_PASSWORD": "enter_password",
+        "EMAIL_FROM_ADDRESS": "noreply@address.com"
+      },
+      "applicationUrl": "https://localhost:7098;http://localhost:5098",
+      "dotnetRunMessages": true
+    },
+    "IIS Express": {
+      "commandName": "IISExpress",
+      "launchBrowser": true,
+      "launchUrl": "swagger",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    "Docker": {
+      "commandName": "Docker",
+      "launchBrowser": true,
+      "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}/swagger",
+      "publishAllPorts": true,
+      "useSSL": true
+    }
+  }
+}

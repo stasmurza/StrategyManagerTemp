@@ -1,0 +1,36 @@
+version: '3.4'
+
+services:
+  strategymanager.webapi:
+    image: ${DOCKER_REGISTRY-}strategymanagerwebapi
+    build:
+      context: .
+      dockerfile: StrategyManager.WebAPI/Dockerfile
+  db:
+    image: mongo
+    restart: always
+    ports:
+      - '27017-27019:27017-27019'
+    volumes:
+      - db:/var/lib/mongo/data
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: 'rabbitmq'
+    ports:
+      - 5672:5672
+      - 15672:15672
+    volumes:
+        - rabbitmqdata:/var/lib/rabbitmq/data
+        - rabbitmqlog:/var/lib/rabbitmq/log
+    networks:
+        - rabbitmq_network
+volumes:
+     db:
+       driver: local
+     rabbitmqdata:
+       driver: local
+     rabbitmqlog:
+       driver: local
+networks:
+  rabbitmq_network:
+    driver: bridge

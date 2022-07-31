@@ -1,0 +1,26 @@
+version: '3.4'
+
+services:
+  strategymanager.webapi:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=https://+:443;http://+:80
+      - EVENT_STORE_CONNECTION_STRING=mongodb://host.docker.internal:27017
+      - EVENT_STORE_DATABASE_NAME=Strategy_manager_event_store
+      - JWT_SECRET=d14c7bc2-c7bc-447f-b8bc-aa1fd353042f
+      - JWT_EXPIRATION_TIME_MINUTES=2000
+      - SMTP_HOST=enter_host
+      - SMTP_PORT=1000
+      - SMTP_LOGIN=enter_login
+      - SMTP_PASSWORD=enter_password
+      - EMAIL_FROM_ADDRESS=noreply@address.com
+      - RABBITMQ_HOST_NAME=host.docker.internal
+      - RABBITMQ_USER_NAME=guest
+      - RABBITMQ_PASSWORD=guest
+      - RABBITMQ_QUEUE_NAME=events
+    ports:
+      - "80"
+      - "443"
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
