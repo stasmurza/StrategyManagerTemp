@@ -1,11 +1,12 @@
 ﻿using StrategyManager.Core.Models.Store;
 
-namespace StrategyManager.Core.Models.DTOs
+namespace StrategyManager.Core.Models.DTOs.Strategies
 {
     public class StrategyDTO
     {
-        public string Id { get; set; } = String.Empty;
-        public string Name { get; set; } = String.Empty;
+        public string Id { get; set; } = string.Empty;
+        public string Code { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
         public bool StartWithService { get; set; } = false;
         public IList<TicketDTO> Tickets { get; set; } = new List<TicketDTO>();
     }

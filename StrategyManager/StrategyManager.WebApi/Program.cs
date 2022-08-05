@@ -27,7 +27,6 @@ builder.Services.AddBusinessLayerServiceOptions(config);
 builder.Services.AddInfrastructureServiceOptions(config);
 builder.Services.AddBusinessLayerServices();
 builder.Services.AddInfrastructureServices();
-builder.Services.AddMediatR(typeof(StrategyManager.Core.Handlers.Jobs.StartJobHandler));
 builder.Services.AddVersioning();
 builder.Services.AddAutoMapping();
 builder.Services.AddTransient<IStartupFilter, SeedDataStartupFilter>();

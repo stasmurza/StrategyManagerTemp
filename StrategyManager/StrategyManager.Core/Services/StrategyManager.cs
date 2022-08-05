@@ -10,47 +10,37 @@ namespace StrategyManager.Core.Services
     public class StrategyManager : IStrategyManager
     {
         private ConcurrentDictionary<string, (IStrategy strategy, Task task)> strategies;
+        public IStrategyManagerReports Reports { get; private set; }
+        private readonly IStrategyFactory strategyPool;
         private readonly ILogger logger;
 
-        public StrategyManager(ILogger<StrategyManager> logger)
+        public StrategyManager(
+            IStrategyManagerReports reports,
+            IStrategyFactory strategyPool,
+            ILogger<StrategyManager> logger)
         {
             strategies = new ();
+            Reports = reports;
+            Reports.GetStrategies += () => strategies.Select(i => i.Value.strategy).ToList();
+            this.strategyPool = strategyPool;
             this.logger = logger;
         }
 
-        public TicketStatus GetTicketStatus(string strategyCode, string ticketCode)
+        public IEnumerable<Strategy> GetStrategies()
         {
-            var key = strategyCode + ticketCode;
-            if (!strategies.TryGetValue(key, out (IStrategy, Task) tuple))
-            {
-                var message = $"Strategy {strategyCode} with ticket {ticketCode} is not found";
-                throw new NotFoundException(message);
-            }
+            var list = strategies
+                .Select(i => i.Value.strategy)
+                .ToList();
 
-            var strategy = tuple.Item1;
-
-            return new TicketStatus
+            foreach(var strategy in list)
             {
-                StrategyCode = strategy.Code.ToString(),
-                TicketCode = strategy.TicketCode,
-                Status = strategy.Status.ToString(),
-                LastActive = strategy.LastActive,
-            };
-        }
-
-        public IEnumerable<TicketStatus> GetTicketStatuses()
-        {
-            var list = strategies.Select(i => i.Value.strategy).ToList();
-            foreach (var strategy in list)
-            {
-                yield return new TicketStatus
+                yield return new Strategy
                 {
-                    StrategyCode = strategy.Code.ToString(),
+                    StrategyCode = strategy.Code,
                     TicketCode = strategy.TicketCode,
-                    Status = strategy.Status.ToString(),
-                    LastActive = strategy.LastActive,
+                    Status = strategy.Status,
                 };
-            };
+            }
         }
 
         public void Start(string strategyCode, string ticketCode)
@@ -61,7 +51,7 @@ namespace StrategyManager.Core.Services
                 throw new ConflictException("Strategy {strategyCode} with ticket {ticketCode} is running");
             }
 
-            var strategy = new TurtlesStrategy();
+            var strategy = strategyPool.CreateStrategyByCode(strategyCode);
             var task = Task.Run(async () => await strategy.StartAsync(new CancellationTokenSource()));
             strategies.TryAdd(key, (strategy, task));
 

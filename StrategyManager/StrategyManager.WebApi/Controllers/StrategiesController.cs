@@ -1,9 +1,11 @@
 ﻿using AutoMapper;
 using StrategyManager.Contracts;
-using StrategyManager.Contracts.Jobs;
-using StrategyManager.Contracts.Jobs.Tickets;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using StrategyManager.Contracts.Strategies;
+using StrategyManager.Core.Models.Handlers.Strategies;
+using StrategyManager.Contracts.Strategies.Tickets;
+using StrategyManager.Core.Models.Handlers.Strategies.Tickets;
 
 namespace StrategyManager.WebApi.Controllers
 {
@@ -32,104 +34,98 @@ namespace StrategyManager.WebApi.Controllers
         }
 
         /// <summary>
-        /// Returns all jobs.
+        /// Returns all strategies.
         /// </summary>
-        /// <returns>Jobs <see cref="GetJobsResponse"/></returns>
+        /// <returns>Jobs <see cref="GetStrategiesResponse"/></returns>
         [HttpGet]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(GetJobsResponse))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(GetStrategiesResponse))]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(ErrorResponse))]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
-        public async Task<IActionResult> GetJobsAsync()
+        public async Task<IActionResult> GetStrategiesAsync()
         {
-            var domainOutput = await mediator.Send(new GetJobsInput());
-            return Ok(mapper.Map<GetJobsResponse>(domainOutput));
+            var domainOutput = await mediator.Send(new GetStrategiesInput());
+            return Ok(mapper.Map<GetStrategiesResponse>(domainOutput));
         }
 
         /// <summary>
-        /// Returns all active jobs.
+        /// Add ticket to strategy
         /// </summary>
-        /// <returns>Active jobs <see cref="GetActiveJobsResponse"/></returns>
-        [HttpGet("active-jobs")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(GetJobsResponse))]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(ErrorResponse))]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
-        public async Task<IActionResult> GetActiveJobsAsync()
-        {
-            var domainOutput = await mediator.Send(new GetActiveJobsInput());
-            return Ok(mapper.Map<GetActiveJobsResponse>(domainOutput));
-        }
-
-        /// <summary>
-        /// Add ticket to job
-        /// </summary>
-        /// <param name="jobId">Id of job</param>
+        /// <param name="strategyId">Id of strategy</param>
         /// <param name="request">Data of a ticket <see cref="AddTicketRequest"/></param>
         /// <returns></returns>
-        [HttpPost("{jobId}/tickets")]
+        [HttpPost("{strategyId}/tickets")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(ErrorResponse))]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
-        public async Task<IActionResult> AddTicketAsync([FromRoute] string jobId, AddTicketRequest request)
+        public async Task<IActionResult> AddTicketAsync([FromRoute] string strategyId, AddTicketRequest request)
         {
             var input = mapper.Map<AddTicketInput>(request);
-            input.JobId = jobId;
+            input.StrategyId = strategyId;
             await mediator.Send(input);
 
             return Ok();
         }
 
         /// <summary>
-        /// Remove ticket from job
+        /// Remove ticket from strategy
         /// </summary>
-        /// <param name="jobId">Id of job</param>
+        /// <param name="strategyId">Id of strategy</param>
         /// <param name="request">Data of a ticket <see cref="RemoveTicketRequest"/></param>
         /// <returns></returns>
-        [HttpDelete("{jobId}/tickets")]
+        [HttpDelete("{strategyId}/tickets")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(ErrorResponse))]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
-        public async Task<IActionResult> RemoveTicketAsync([FromRoute] string jobId, RemoveTicketRequest request)
+        public async Task<IActionResult> RemoveTicketAsync([FromRoute] string strategyId, RemoveTicketRequest request)
         {
             var input = mapper.Map<RemoveTicketInput>(request);
-            input.JobId = jobId;
+            input.StrategyId = strategyId;
             await mediator.Send(input);
 
             return NoContent();
         }
 
         /// <summary>
-        /// Run new job
+        /// Run new strategy
         /// </summary>
-        /// <param name="request">Data of a job <see cref="StartJobRequest"/></param>
+        /// <param name="strategyId">Id of strategy</param>
         /// <returns></returns>
-        [HttpPost("active-jobs")]
+        [HttpPost("active-strategies/{strategyId}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(ErrorResponse))]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
-        public async Task<IActionResult> RunNewJobAsync(StartJobRequest request)
+        public async Task<IActionResult> RunStrategyAsync(string strategyId)
         {
-            var input = mapper.Map<StartJobInput>(request);
+            var input = new RunStrategyInput
+            {
+                Id = strategyId
+            };
+
             await mediator.Send(input);
 
             return NoContent();
         }
 
         /// <summary>
-        /// Stop job
+        /// Stop strategy
         /// </summary>
-        /// <param name="request">Data of a job <see cref="StopJobRequest"/></param>
+        /// <param name="request">Id of strategy</param>
         /// <returns></returns>
-        [HttpDelete("active-jobs")]
+        [HttpDelete("active-strategies/{strategyId}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(ErrorResponse))]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
-        public async Task<IActionResult> StopJobAsync(StopJobRequest request)
+        public async Task<IActionResult> StopStrategyAsync(string strategyId)
         {
-            var input = mapper.Map<StopJobInput>(request);
+            var input = new StopStrategyInput
+            {
+                Id = strategyId
+            };
+
             await mediator.Send(input);
 
             return NoContent();

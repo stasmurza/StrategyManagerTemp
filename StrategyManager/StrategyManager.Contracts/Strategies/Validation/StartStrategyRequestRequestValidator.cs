@@ -4,9 +4,9 @@ using MongoDB.Bson;
 namespace StrategyManager.Contracts.Strategies.Validation
 {
     /// <summary>
-    /// Start job request validator
+    /// Start strategy request validator
     /// </summary>
-    public class StartStrategyRequestRequestValidator : AbstractValidator<StartStrategyRequest>
+    public class StartStrategyRequestRequestValidator : AbstractValidator<RunStrategyRequest>
     {
         /// <summary>
         /// Validation rules

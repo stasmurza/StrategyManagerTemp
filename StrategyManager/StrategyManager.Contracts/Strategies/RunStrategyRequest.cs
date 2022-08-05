@@ -1,12 +1,12 @@
 ﻿namespace StrategyManager.Contracts.Strategies
 {
     /// <summary>
-    /// Start job by id
+    /// Start strategy by id
     /// </summary>
-    public class StartStrategyRequest
+    public class RunStrategyRequest
     {
         /// <summary>
-        /// Id of job
+        /// Id of strategy
         /// </summary>
         public string Id { get; set; } = String.Empty;
     }

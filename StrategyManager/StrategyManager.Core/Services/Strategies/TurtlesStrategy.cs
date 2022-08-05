@@ -1,9 +1,10 @@
 ﻿using StrategyManager.Core.Models.Services.Strategies;
 using StrategyManager.Core.Services.Abstractions;
+using StrategyManager.Core.Services.Abstractions.Strategies;
 
 namespace StrategyManager.Core.Services.Strategies
 {
-    public class TurtlesStrategy : IStrategy
+    public class TurtlesStrategy : ITurtlesStrategy
     {
         public StrategyStatus Status => throw new NotImplementedException();
 

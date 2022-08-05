@@ -1,6 +1,8 @@
-﻿using StrategyManager.Core.Services;
+﻿using MediatR;
+using StrategyManager.Core.Services;
 using StrategyManager.Core.Services.Abstractions;
-using StrategyManager.Core.Services.Binance;
+using StrategyManager.Core.Services.Abstractions.Strategies;
+using StrategyManager.Core.Services.Strategies;
 
 namespace StrategyManager.WebAPI.DependencyInjection
 {
@@ -16,13 +18,16 @@ namespace StrategyManager.WebAPI.DependencyInjection
         /// <returns></returns>
         public static IServiceCollection AddBusinessLayerServices(this IServiceCollection services)
         {
-            services.AddSingleton<IBinanceJob, BinanceDataCollector>();
-            services.AddScoped<IStrategyPool, StrategyPool>();
-            services.AddScoped<IHostedServicePool, HostedServicePool>();
+            services.AddTransient<ITurtlesStrategy, TurtlesStrategy>();
+            services.AddScoped<IStrategyFactory, StrategyFactory>();
             services.AddHostedService<HostedEventPublisher>();
-            services.AddHostedService<HostedStrategyService<IBinanceJob>>();
+
+            //For starting services on startup
+            services.AddHostedService<HostedStrategyService>();
             services.AddTransient<IEmailSender, EmailSender>();
             services.AddTransient<IJwtTokenService, JwtTokenService>();
+
+            services.AddMediatR(typeof(StrategyManager.Core.Handlers.Strategies.RunStrategyHandler));
 
             return services;
         }

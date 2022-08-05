@@ -1,6 +1,6 @@
 ﻿using StrategyManager.Contracts.Strategies.Tickets;
 
-namespace StrategyManager.Contracts.Strategies
+namespace StrategyManager.Contracts.StrategiesReport
 {
     /// <summary>
     /// Strategy view model
@@ -16,11 +16,6 @@ namespace StrategyManager.Contracts.Strategies
         /// Name of strategy
         /// </summary>
         public string Name { get; set; } = String.Empty;
-
-        /// <summary>
-        /// Should strategy be started with startup of service
-        /// </summary>
-        public bool StartWithService { get; set; } = false;
 
         /// <summary>
         /// Tickets for strategy

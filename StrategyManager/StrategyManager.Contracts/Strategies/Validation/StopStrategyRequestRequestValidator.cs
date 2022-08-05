@@ -4,7 +4,7 @@ using MongoDB.Bson;
 namespace StrategyManager.Contracts.Strategies.Validation
 {
     /// <summary>
-    /// Stop job request validator
+    /// Stop strategy request validator
     /// </summary>
     public class StopStrategyRequestRequestValidator : AbstractValidator<StopStrategyRequest>
     {

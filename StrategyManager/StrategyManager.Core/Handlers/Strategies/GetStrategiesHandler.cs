@@ -1,9 +1,9 @@
 ﻿using AutoMapper;
-using StrategyManager.Core.Models.DTOs;
 using StrategyManager.Core.Models.Handlers.Strategies;
 using StrategyManager.Core.Models.Store;
 using StrategyManager.Core.Repositories.Abstractions;
 using MediatR;
+using StrategyManager.Core.Models.DTOs.Strategies;
 
 namespace StrategyManager.Core.Handlers.Strategies
 {
@@ -22,11 +22,11 @@ namespace StrategyManager.Core.Handlers.Strategies
 
         public async Task<GetStrategiesOutput> Handle(GetStrategiesInput input, CancellationToken cancellationToken)
         {
-            var jobs = await repository.GetAllAsync();
+            var strategies = await repository.GetAllAsync();
 
             return new GetStrategiesOutput
             {
-                Jobs = jobs.Select(i => mapper.Map(i, new StrategyDTO()))
+                Strategies = strategies.Select(i => mapper.Map(i, new StrategyDTO()))
             };
         }
     }

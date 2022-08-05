@@ -27,17 +27,17 @@ namespace StrategyManager.Core.Handlers.Strategies.Tickets
 
         public async Task<Unit> Handle(AddTicketInput input, CancellationToken cancellationToken)
         {
-            var job = await repository.GetByIdAsync(input.JobId);
-            if (job == null)
+            var strategy = await repository.GetByIdAsync(input.StrategyId);
+            if (strategy == null)
             {
-                var message = $"Job with id {input.JobId} is not found";
+                var message = $"Strategy with id {input.StrategyId} is not found";
                 throw new NotFoundException(message)
                 {
                     ErrorCode = ErrorCodes.NotFound
                 };
             }
             
-            if (job.Tickets.Any(i => i.Code == input.Code))
+            if (strategy.Tickets.Any(i => i.Code == input.Code))
             {
                 var message = $"Ticket with code {input.Code} has already been added";
                 throw new ConflictException(message)
@@ -47,9 +47,9 @@ namespace StrategyManager.Core.Handlers.Strategies.Tickets
             }
 
             var ticket = mapper.Map(input, new Ticket());
-            job.Tickets.Add(ticket);
+            strategy.Tickets.Add(ticket);
             
-            await repository.UpdateAsync(job);
+            await repository.UpdateAsync(strategy);
 
             return Unit.Value;
         }

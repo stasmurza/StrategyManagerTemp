@@ -27,14 +27,14 @@ namespace StrategyManager.Core.Handlers.Strategies.Tickets
 
         public async Task<Unit> Handle(RemoveTicketInput input, CancellationToken cancellationToken)
         {
-            var job = await repository.GetByIdAsync(input.JobId);
-            if (job == null)
+            var strategy = await repository.GetByIdAsync(input.StrategyId);
+            if (strategy == null)
             {
-                var message = $"Job with id {input.JobId} is not found";
+                var message = $"Strategy with id {input.StrategyId} is not found";
                 throw new NotFoundException(message) { ErrorCode = ErrorCodes.NotFound };
             }
 
-            var ticket = job.Tickets.FirstOrDefault(i => i.Code == input.Code);
+            var ticket = strategy.Tickets.FirstOrDefault(i => i.Code == input.Code);
             if (ticket is null)
             {
                 var message = $"Ticket with code {input.Code} was not found";
@@ -44,9 +44,9 @@ namespace StrategyManager.Core.Handlers.Strategies.Tickets
                 };
             }
 
-            
-            job.Tickets.Remove(ticket);
-            await repository.UpdateAsync(job);
+
+            strategy.Tickets.Remove(ticket);
+            await repository.UpdateAsync(strategy);
 
             return Unit.Value;
         }

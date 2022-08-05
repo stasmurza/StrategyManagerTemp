@@ -7,6 +7,9 @@ using Microsoft.Extensions.Logging;
 
 namespace StrategyManager.Core.Services
 {
+    /// <summary>
+    /// For starting services on startup 
+    /// </summary>
     public class HostedStrategyService : BackgroundService
     {
         private readonly IServiceProvider serviceProvider;
@@ -69,7 +72,7 @@ namespace StrategyManager.Core.Services
         public async Task StopStrategiesAsync(CancellationToken cancellationToken)
         {
             logger.LogInformation($"Strategies are stopping.");
-            var statuses = strategyManager.GetTicketStatuses();
+            var statuses = strategyManager.Reports.TicketsReport();
             foreach (var status in statuses)
             {
                 await strategyManager.StopAsync(status.StrategyCode, status.TicketCode);

@@ -8,23 +8,23 @@ using StrategyManager.Core.Models.Handlers.Strategies;
 
 namespace StrategyManager.Core.Handlers.Strategies
 {
-    public class StopStrategyHandler : IRequestHandler<StopStrategyInput, Unit> 
+    public class RunStrategyHandler : IRequestHandler<RunStrategyInput, Unit> 
     {
         private readonly IStrategyManager strategyManager;
         private readonly IRepository<Strategy> repository;
         private readonly ILogger logger;
 
-        public StopStrategyHandler(
+        public RunStrategyHandler(
             IStrategyManager strategyManager,
             IRepository<Strategy> repository,
-            ILogger<StopStrategyHandler> logger)
+            ILogger<RunStrategyHandler> logger)
         {
             this.strategyManager = strategyManager;
             this.repository = repository;
             this.logger = logger;
         }
 
-        public async Task<Unit> Handle(StopStrategyInput input, CancellationToken cancellationToken)
+        public async Task<Unit> Handle(RunStrategyInput input, CancellationToken cancellationToken)
         {
             var strategy = await repository.GetByIdAsync(input.Id);
             if (strategy == null)
@@ -36,15 +36,11 @@ namespace StrategyManager.Core.Handlers.Strategies
                 };
             }
 
-            var strategies = strategyManager
-                .GetStrategies()
-                .Where(i => i.StrategyCode.ToString() == strategy.Code);
-
-            foreach (var item in strategies)
+            foreach (var ticket in strategy.Tickets)
             {
-                await strategyManager.StopAsync(item.StrategyCode.ToString(), item.TicketCode);
+                strategyManager.Start(strategy.Code, ticket.Code);
                 if (cancellationToken.IsCancellationRequested) break;
-                logger.LogInformation($"Strategy {item.StrategyCode} by ticket {item.TicketCode} stopped by command");
+                logger.LogInformation($"Strategy {input.Id} started by command");
             }
 
             return Unit.Value;

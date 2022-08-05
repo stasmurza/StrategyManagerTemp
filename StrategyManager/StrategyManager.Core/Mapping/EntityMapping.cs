@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using StrategyManager.Core.Models.DTOs.Strategies;
 
 namespace StrategyManager.Core.Mapping
 {
@@ -7,11 +8,11 @@ namespace StrategyManager.Core.Mapping
         public EntityMapping()
         {
             //Tickets
-            CreateMap<Models.Handlers.Jobs.Tickets.AddTicketInput, Models.Store.Ticket>();
-            CreateMap<Models.Store.Ticket, Models.DTOs.TicketDTO>();
+            CreateMap<Models.Handlers.Strategies.Tickets.AddTicketInput, Models.Store.Ticket>();
+            CreateMap<Models.Store.Ticket, TicketDTO>();
 
             //Jobs
-            CreateMap<Models.Store.Strategy, Models.DTOs.StrategyDTO>();
+            CreateMap<Models.Store.Strategy, StrategyDTO>();
         }
     }
 }

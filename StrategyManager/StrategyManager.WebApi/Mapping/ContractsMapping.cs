@@ -1,9 +1,10 @@
 ﻿using AutoMapper;
+using StrategyManager.Core.Models.DTOs.Strategies;
 
 namespace StrategyManager.WebAPI.Mapping
 {
     /// <summary>
-    /// Auto mapper types mapping of Contracts
+    /// Auto mapper types mapping
     /// </summary>
     public class ContractsMapping : Profile
     {
@@ -13,16 +14,18 @@ namespace StrategyManager.WebAPI.Mapping
         public ContractsMapping()
         {
             //Tickets
-            CreateMap<Contracts.Jobs.Tickets.AddTicketRequest, Core.Models.Handlers.Jobs.Tickets.AddTicketInput>();
-            CreateMap<Contracts.Jobs.Tickets.RemoveTicketRequest, Core.Models.Handlers.Jobs.Tickets.AddTicketInput>();
-            CreateMap<Core.Models.DTOs.TicketDTO, Contracts.Jobs.Tickets.TicketViewModel>();
+            CreateMap<Contracts.Strategies.Tickets.AddTicketRequest, Core.Models.Handlers.Strategies.Tickets.AddTicketInput>();
+            CreateMap<Contracts.Strategies.Tickets.RemoveTicketRequest, Core.Models.Handlers.Strategies.Tickets.AddTicketInput>();
+            CreateMap<TicketDTO, Contracts.Strategies.Tickets.TicketViewModel>();
 
-            //Jobs
-            CreateMap<Core.Models.DTOs.StrategyDTO, Contracts.Jobs.StrategyViewModel>();
-            CreateMap<Core.Models.Handlers.Jobs.GetJobsOutput, Contracts.Jobs.GetJobsResponse>();
-            CreateMap<Core.Models.Handlers.Jobs.GetActiveJobsOutput, Contracts.Jobs.GetActiveJobsResponse>();
-            CreateMap<Contracts.Jobs.StopJobRequest, Core.Models.Handlers.Jobs.StopJobInput>();
-            CreateMap<Contracts.Jobs.StartJobRequest, Core.Models.Handlers.Jobs.StartJobInput>();
+            //Strategies
+            CreateMap<StrategyDTO, Contracts.Strategies.StrategyViewModel>();
+            CreateMap<Core.Models.Handlers.Strategies.GetStrategiesOutput, Contracts.Strategies.GetStrategiesResponse>();
+            CreateMap<Contracts.Strategies.StopStrategyRequest, Core.Models.Handlers.Strategies.StopStrategyInput>();
+            CreateMap<Contracts.Strategies.RunStrategyRequest, Core.Models.Handlers.Strategies.RunStrategyInput>();
+
+            //Reports
+            CreateMap<Core.Models.Handlers.StrategiesReport.ActiveStrategiesReportOutput, Contracts.StrategiesReport.ActiveStrategiesReportResponse>();
         }
     }
 }

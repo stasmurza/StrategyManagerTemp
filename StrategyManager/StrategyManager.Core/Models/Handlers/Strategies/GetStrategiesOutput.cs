@@ -1,9 +1,9 @@
-﻿using StrategyManager.Core.Models.DTOs;
+﻿using StrategyManager.Core.Models.DTOs.Strategies;
 
 namespace StrategyManager.Core.Models.Handlers.Strategies
 {
     public class GetStrategiesOutput
     {
-        public IEnumerable<StrategyDTO> Jobs { get; set; } = Enumerable.Empty<StrategyDTO>();
+        public IEnumerable<StrategyDTO> Strategies { get; set; } = Enumerable.Empty<StrategyDTO>();
     }
 }

@@ -1,12 +1,12 @@
-﻿namespace StrategyManager.Contracts.Strategies
+﻿namespace StrategyManager.Contracts.StrategiesReport
 {
     /// <summary>
-    /// Get strategies response
+    /// Active strategies report response
     /// </summary>
-    public class GetStrategiesResponse
+    public class ActiveStrategiesReportResponse
     {
         /// <summary>
-        /// Strategies
+        /// Active strategies
         /// </summary>
         public IEnumerable<StrategyViewModel> Jobs { get; set; } = Enumerable.Empty<StrategyViewModel>();
     }

@@ -1,8 +1,7 @@
-﻿using StrategyManager.Core.Models.Services.Jobs;
-using StrategyManager.Core.Models.Store;
-using StrategyManager.Core.Repositories.Abstractions;
+﻿using StrategyManager.Core.Repositories.Abstractions;
 using StrategyManager.Data;
 using MongoDB.Driver;
+using StrategyManager.Core.Models.Services.Strategies;
 
 namespace StrategyManager.WebAPI.Filters
 {
@@ -33,9 +32,9 @@ namespace StrategyManager.WebAPI.Filters
                 var message = $"Unsuccessful attempt to activate a service {nameof(IEventStoreDbContext)}";
                 if (dbContext is null) throw new InvalidOperationException(message);
 
-                var jobRepoitory = scope.ServiceProvider.GetService<IRepository<Strategy>>();
-                message = $"Unsuccessful attempt to activate a service {nameof(IRepository<Strategy>)}";
-                if (jobRepoitory is null) throw new InvalidOperationException(message);
+                var strategyRepoitory = scope.ServiceProvider.GetService<IRepository<Core.Models.Store.Strategy>>();
+                message = $"Unsuccessful attempt to activate a service {nameof(IRepository<Core.Models.Store.Strategy>)}";
+                if (strategyRepoitory is null) throw new InvalidOperationException(message);
 
                 var collections = dbContext.Database.ListCollectionNames().ToList() ?? new List<string>();
 
@@ -45,13 +44,13 @@ namespace StrategyManager.WebAPI.Filters
                     dbContext.Database.CreateCollection(CollectionNames.Jobs);
                     
                     //Binance
-                    var binanceJob = new Strategy
+                    var binanceJob = new Core.Models.Store.Strategy
                     {
-                        Code = JobCode.Binance.ToString(),
-                        Name = "Binance API",
+                        Code = StrategyCode.Turtles.ToString(),
+                        Name = "Turtles",
                         StartWithHost = false,
                     };
-                    var task = jobRepoitory.CreateAsync(binanceJob);
+                    var task = strategyRepoitory.CreateAsync(binanceJob);
                     task.Wait();
                 }
                 
