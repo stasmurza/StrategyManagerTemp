@@ -11,7 +11,7 @@ namespace StrategyManager.WebAPI.Configuration.Swagger
             new OpenApiInfo
             {
                 Version = "v1",
-                Title = "Partner Portal API V1",
+                Title = "Strategy manager API V1",
             }
         };
     }

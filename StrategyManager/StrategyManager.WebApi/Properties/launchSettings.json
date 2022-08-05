@@ -23,7 +23,11 @@
         "SMTP_PORT": "1000",
         "SMTP_LOGIN": "enter_login",
         "SMTP_PASSWORD": "enter_password",
-        "EMAIL_FROM_ADDRESS": "noreply@address.com"
+        "EMAIL_FROM_ADDRESS": "noreply@address.com",
+        "RABBITMQ_HOST_NAME": "host.docker.internal",
+        "RABBITMQ_USER_NAME": "guest",
+        "RABBITMQ_PASSWORD": "guest",
+        "RABBITMQ_QUEUE_NAME": "events"
       },
       "applicationUrl": "https://localhost:7098;http://localhost:5098",
       "dotnetRunMessages": true

@@ -1,7 +1,9 @@
-﻿namespace StrategyManager.Core.Services.Abstractions
+﻿using StrategyManager.Core.Models.Services.Strategies;
+
+namespace StrategyManager.Core.Services.Abstractions
 {
     public interface IStrategyFactory
     {
-        IStrategy CreateStrategyByCode(string strategyCode);
+        IStrategy CreateStrategyByCode(StrategyCode strategyCode, string ticketCode);
     }
 }

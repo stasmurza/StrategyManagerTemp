@@ -1,5 +1,4 @@
 using FluentValidation.AspNetCore;
-using MediatR;
 using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
 using StrategyManager.WebAPI.Configuration;
 using StrategyManager.WebAPI.Configuration.Swagger;
@@ -44,12 +43,6 @@ app.UseCors(p =>
     p.AllowAnyHeader();
     p.AllowAnyMethod();
 });
-
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
 
 app.UseMiddleware<ExceptionHandler>();
 app.SetupSwaggerUI(ApiVersions.Versions);

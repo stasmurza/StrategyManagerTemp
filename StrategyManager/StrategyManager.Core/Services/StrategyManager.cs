@@ -2,7 +2,6 @@
 using StrategyManager.Core.Exceptions;
 using StrategyManager.Core.Models.Services.Strategies;
 using StrategyManager.Core.Services.Abstractions;
-using StrategyManager.Core.Services.Strategies;
 using System.Collections.Concurrent;
 
 namespace StrategyManager.Core.Services
@@ -10,19 +9,15 @@ namespace StrategyManager.Core.Services
     public class StrategyManager : IStrategyManager
     {
         private ConcurrentDictionary<string, (IStrategy strategy, Task task)> strategies;
-        public IStrategyManagerReports Reports { get; private set; }
-        private readonly IStrategyFactory strategyPool;
+        private readonly IStrategyFactory strategyFactory;
         private readonly ILogger logger;
 
         public StrategyManager(
-            IStrategyManagerReports reports,
-            IStrategyFactory strategyPool,
+            IStrategyFactory strategyFactory,
             ILogger<StrategyManager> logger)
         {
             strategies = new ();
-            Reports = reports;
-            Reports.GetStrategies += () => strategies.Select(i => i.Value.strategy).ToList();
-            this.strategyPool = strategyPool;
+            this.strategyFactory = strategyFactory;
             this.logger = logger;
         }
 
@@ -51,7 +46,10 @@ namespace StrategyManager.Core.Services
                 throw new ConflictException("Strategy {strategyCode} with ticket {ticketCode} is running");
             }
 
-            var strategy = strategyPool.CreateStrategyByCode(strategyCode);
+            var parsed = Enum.TryParse(strategyCode, out StrategyCode code);
+            if (!parsed) throw new ArgumentOutOfRangeException(nameof(strategyCode), $"Not expected value: {strategyCode}");
+
+            var strategy = strategyFactory.CreateStrategyByCode(code, ticketCode);
             var task = Task.Run(async () => await strategy.StartAsync(new CancellationTokenSource()));
             strategies.TryAdd(key, (strategy, task));
 

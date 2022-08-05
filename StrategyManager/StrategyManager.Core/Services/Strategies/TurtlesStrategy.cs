@@ -1,32 +1,38 @@
 ﻿using StrategyManager.Core.Models.Services.Strategies;
-using StrategyManager.Core.Services.Abstractions;
 using StrategyManager.Core.Services.Abstractions.Strategies;
 
 namespace StrategyManager.Core.Services.Strategies
 {
     public class TurtlesStrategy : ITurtlesStrategy
     {
-        public StrategyStatus Status => throw new NotImplementedException();
+        public StrategyStatus Status { get; private set; } = StrategyStatus.Stopped;
 
-        public StrategyCode Code => throw new NotImplementedException();
+        public StrategyCode Code { get; private set; } = default;
 
-        public string TicketCode => throw new NotImplementedException();
+        public string TicketCode { get; private set; } = String.Empty;
 
-        public DateTime LastActive => throw new NotImplementedException();
+        public DateTime LastActive { get; private set; } = default;
+
+        public TurtlesStrategy(
+            StrategyCode code,
+            string ticketCode)
+        {
+            Code = code;
+            TicketCode = ticketCode;
+        }
 
         public void Dispose()
         {
-            throw new NotImplementedException();
         }
 
-        public Task StartAsync(CancellationTokenSource cancellationTokenSource)
+        public async Task StartAsync(CancellationTokenSource cancellationTokenSource)
         {
-            throw new NotImplementedException();
+            Status = StrategyStatus.Running;
         }
 
-        public Task StopAsync()
+        public async Task StopAsync()
         {
-            throw new NotImplementedException();
+            Status = StrategyStatus.Stopped;
         }
     }
 }

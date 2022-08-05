@@ -4,6 +4,6 @@
     {
         public StrategyCode StrategyCode { get; set; } = default;
         public string TicketCode { get; set; } = string.Empty;
-        public StrategyStatus Status { get; set; } = StrategyStatus.Stopped;
+        public StrategyStatus Status { get; set; } = default;
     }
 }

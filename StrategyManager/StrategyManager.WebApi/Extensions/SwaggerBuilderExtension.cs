@@ -28,7 +28,11 @@ namespace StrategyManager.WebAPI.Extensions
 
         private static void SetupSwaggerUIOptions(SwaggerUIOptions options, List<OpenApiInfo> apiVersions)
         {
-            apiVersions.ForEach(version => options.SwaggerEndpoint($"{version.Version}/swagger.json", version.Title));
+            apiVersions.ForEach(version =>
+            {
+                options.SwaggerEndpoint($"swagger/{version.Version}/swagger.json", version.Title);
+                options.RoutePrefix = "";
+            });
         }
     }
 }

@@ -36,7 +36,7 @@ namespace StrategyManager.WebApi.Controllers
         /// <summary>
         /// Returns all strategies.
         /// </summary>
-        /// <returns>Jobs <see cref="GetStrategiesResponse"/></returns>
+        /// <returns>Strategies <see cref="GetStrategiesResponse"/></returns>
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(GetStrategiesResponse))]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(ErrorResponse))]
@@ -112,7 +112,7 @@ namespace StrategyManager.WebApi.Controllers
         /// <summary>
         /// Stop strategy
         /// </summary>
-        /// <param name="request">Id of strategy</param>
+        /// <param name="strategyId">Id of strategy</param>
         /// <returns></returns>
         [HttpDelete("active-strategies/{strategyId}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]

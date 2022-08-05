@@ -1,11 +1,9 @@
-﻿using StrategyManager.Contracts.Strategies.Tickets;
-
-namespace StrategyManager.Contracts.StrategiesReport
+﻿namespace StrategyManager.Contracts.StrategiesReport
 {
     /// <summary>
     /// Strategy view model
     /// </summary>
-    public class StrategyViewModel
+    public class StrategyReportViewModel
     {
         /// <summary>
         /// Id of strategy
@@ -20,6 +18,6 @@ namespace StrategyManager.Contracts.StrategiesReport
         /// <summary>
         /// Tickets for strategy
         /// </summary>
-        public IEnumerable<TicketViewModel> Tickets { get; set; } = Enumerable.Empty<TicketViewModel>();
+        public IEnumerable<TicketReportViewModel> Tickets { get; set; } = Enumerable.Empty<TicketReportViewModel>();
     }
 }

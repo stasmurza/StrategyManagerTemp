@@ -29,16 +29,15 @@ namespace StrategyManager.Core.Handlers.StrategiesReports
 
         public async Task<ActiveStrategiesReportOutput> Handle(ActiveStrategiesReportInput input, CancellationToken cancellationToken)
         {
-            var ticketsReport = strategyManager.Reports.TicketsReport();
-            var groups = ticketsReport
+            var strategies = strategyManager.GetStrategies();
+            var groups = strategies
                 .GroupBy(i => i.StrategyCode);
 
-            var strategies = await repository.GetAllAsync();
-            var activeStrategies = new List<Strategy>();
+            var repositoryStrategies = await repository.GetAllAsync();
             var list = new List<StrategyDTO>();
             foreach (var group in groups)
             {
-                var strategy = strategies.FirstOrDefault(i => i.Code == group.Key);
+                var strategy = repositoryStrategies.FirstOrDefault(i => i.Code == group.Key.ToString());
                 if (strategy is null)
                 {
                     var message = $"Strategy with code {group.Key} is not found";

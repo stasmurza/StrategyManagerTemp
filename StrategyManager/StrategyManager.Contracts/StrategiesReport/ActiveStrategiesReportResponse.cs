@@ -8,6 +8,6 @@
         /// <summary>
         /// Active strategies
         /// </summary>
-        public IEnumerable<StrategyViewModel> Jobs { get; set; } = Enumerable.Empty<StrategyViewModel>();
+        public IEnumerable<StrategyReportViewModel> Strategies { get; set; } = Enumerable.Empty<StrategyReportViewModel>();
     }
 }

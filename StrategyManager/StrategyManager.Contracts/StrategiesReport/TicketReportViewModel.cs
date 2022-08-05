@@ -3,7 +3,7 @@
     /// <summary>
     /// Ticket view model
     /// </summary>
-    public class TicketViewModel
+    public class TicketReportViewModel
     {
         /// <summary>
         /// Code of ticket

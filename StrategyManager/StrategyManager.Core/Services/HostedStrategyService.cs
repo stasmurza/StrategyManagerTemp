@@ -72,10 +72,10 @@ namespace StrategyManager.Core.Services
         public async Task StopStrategiesAsync(CancellationToken cancellationToken)
         {
             logger.LogInformation($"Strategies are stopping.");
-            var statuses = strategyManager.Reports.TicketsReport();
-            foreach (var status in statuses)
+            var strategies = strategyManager.GetStrategies();
+            foreach (var strategy in strategies)
             {
-                await strategyManager.StopAsync(status.StrategyCode, status.TicketCode);
+                await strategyManager.StopAsync(strategy.StrategyCode.ToString(), strategy.TicketCode);
                 if (cancellationToken.IsCancellationRequested) return;
             }
         }

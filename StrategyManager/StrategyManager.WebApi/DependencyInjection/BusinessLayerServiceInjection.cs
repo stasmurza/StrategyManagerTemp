@@ -18,8 +18,8 @@ namespace StrategyManager.WebAPI.DependencyInjection
         /// <returns></returns>
         public static IServiceCollection AddBusinessLayerServices(this IServiceCollection services)
         {
-            services.AddTransient<ITurtlesStrategy, TurtlesStrategy>();
-            services.AddScoped<IStrategyFactory, StrategyFactory>();
+            services.AddSingleton<IStrategyFactory, StrategyFactory>();
+            services.AddSingleton<IStrategyManager, StrategyManager.Core.Services.StrategyManager>();
             services.AddHostedService<HostedEventPublisher>();
 
             //For starting services on startup
