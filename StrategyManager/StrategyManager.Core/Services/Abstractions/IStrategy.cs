@@ -8,7 +8,7 @@ namespace StrategyManager.Core.Services.Abstractions
         StrategyCode Code { get; }
         string TicketCode { get; }
         DateTime LastActive { get; }
-        Task StartAsync(CancellationTokenSource cancellationTokenSource);
+        Task StartAsync(string ticketCode, CancellationTokenSource cancellationTokenSource);
         Task StopAsync();
     }
 }

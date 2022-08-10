@@ -2,7 +2,7 @@
 using StrategyManager.Core.Services;
 using StrategyManager.Core.Services.Abstractions;
 using StrategyManager.Core.Services.Abstractions.Strategies;
-using StrategyManager.Core.Services.Strategies;
+using StrategyManager.Core.Services.Strategies.Turtles;
 
 namespace StrategyManager.WebAPI.DependencyInjection
 {
@@ -18,6 +18,8 @@ namespace StrategyManager.WebAPI.DependencyInjection
         /// <returns></returns>
         public static IServiceCollection AddBusinessLayerServices(this IServiceCollection services)
         {
+            services.AddTransient<IHistoryProvider, HistoryProvider>();
+            services.AddTransient<ITurtlesStrategy, TurtlesStrategy>();
             services.AddSingleton<IStrategyFactory, StrategyFactory>();
             services.AddSingleton<IStrategyManager, StrategyManager.Core.Services.StrategyManager>();
             services.AddHostedService<HostedEventPublisher>();

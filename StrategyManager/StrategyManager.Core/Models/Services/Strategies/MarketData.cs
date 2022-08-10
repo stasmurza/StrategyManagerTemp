@@ -1,9 +1,9 @@
-﻿namespace StrategyManager.Core.Models.Services.Jobs.Binance
+﻿namespace StrategyManager.Core.Models.Services.Strategies
 {
     public struct MarketData
     {
         public string Symbol { get; set; }
-        public string DateAndTime { get; set; }
+        public DateTime DateAndTime { get; set; }
         public string Side { get; set; }
         public decimal OpenPrice { get; set; }
         public decimal ClosePrice { get; set; }

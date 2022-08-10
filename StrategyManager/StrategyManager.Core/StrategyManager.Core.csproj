@@ -16,4 +16,8 @@
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.22.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Models\Services\HistoryProvider\" />
+  </ItemGroup>
+
 </Project>
