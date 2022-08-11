@@ -1,5 +1,5 @@
-﻿using StrategyManager.Core.Models.Services.MarketDataProvider;
-using StrategyManager.Core.Models.Services.Strategies;
+﻿using StrategyManager.Core.Models.Services;
+using StrategyManager.Core.Models.Services.MarketDataProvider;
 
 namespace StrategyManager.Core.Services.Abstractions
 {

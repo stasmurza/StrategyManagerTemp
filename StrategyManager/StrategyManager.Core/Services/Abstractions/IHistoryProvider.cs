@@ -1,4 +1,4 @@
-﻿using StrategyManager.Core.Models.Services.Strategies;
+﻿using StrategyManager.Core.Models.Services;
 
 namespace StrategyManager.Core.Services.Abstractions
 {

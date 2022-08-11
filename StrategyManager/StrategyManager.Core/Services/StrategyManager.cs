@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using StrategyManager.Core.Exceptions;
 using StrategyManager.Core.Models.Services.Strategies;
-using StrategyManager.Core.Services.Abstractions;
+using StrategyManager.Core.Services.Abstractions.Strategies;
 using System.Collections.Concurrent;
 
 namespace StrategyManager.Core.Services

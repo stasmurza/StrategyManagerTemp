@@ -1,6 +1,4 @@
-﻿using StrategyManager.Core.Models.Services.Strategies;
-
-namespace StrategyManager.Core.Models.Services.MarketDataProvider
+﻿namespace StrategyManager.Core.Models.Services.MarketDataProvider
 {
     public class MarketDataEventArgs : EventArgs
     {

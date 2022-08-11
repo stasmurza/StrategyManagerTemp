@@ -1,10 +1,10 @@
 ﻿using StrategyManager.Core.Exceptions;
 using StrategyManager.Core.Models.Store;
 using StrategyManager.Core.Repositories.Abstractions;
-using StrategyManager.Core.Services.Abstractions;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using StrategyManager.Core.Models.Handlers.Strategies;
+using StrategyManager.Core.Services.Abstractions.Strategies;
 
 namespace StrategyManager.Core.Handlers.Strategies
 {

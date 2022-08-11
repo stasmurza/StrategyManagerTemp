@@ -1,9 +1,9 @@
 ﻿using StrategyManager.Core.Models.Store;
 using StrategyManager.Core.Repositories.Abstractions;
-using StrategyManager.Core.Services.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using StrategyManager.Core.Services.Abstractions.Strategies;
 
 namespace StrategyManager.Core.Services
 {

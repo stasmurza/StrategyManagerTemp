@@ -1,4 +1,4 @@
-﻿namespace StrategyManager.Core.Models.Services.Strategies
+﻿namespace StrategyManager.Core.Models.Services
 {
     public enum TimeFrame
     {

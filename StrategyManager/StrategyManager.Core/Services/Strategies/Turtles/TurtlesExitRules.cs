@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Options;
 using StrategyManager.Core.Models.Options;
+using StrategyManager.Core.Models.Services;
 using StrategyManager.Core.Models.Services.Strategies;
 using StrategyManager.Core.Services.Abstractions;
 using StrategyManager.Core.Services.Abstractions.Strategies;

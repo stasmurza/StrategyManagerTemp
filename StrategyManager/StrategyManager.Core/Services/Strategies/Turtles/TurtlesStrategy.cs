@@ -7,6 +7,7 @@ using StrategyManager.Core.Services.Abstractions.Strategies;
 
 namespace StrategyManager.Core.Services.Strategies.Turtles
 {
+    //read 
     // position opening is blocking synchronous operation
     public class TurtlesStrategy : ITurtlesStrategy
     {
@@ -18,6 +19,7 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
 
         public DateTime LastActive { get; private set; } = default;
 
+        private readonly TurtlesStrategySaga strategySaga;
         private readonly IStrategyStateProvider stateProvider;
         private readonly IMarketDataProvider marketDataProvider;
         private IEntryRules entryRules;
@@ -49,8 +51,9 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
             TicketCode = ticketCode;
             Status = StrategyStatus.Starting;
 
-            var state = stateProvider.GetState();
-            activePosition = state.Position;
+            strategySaga.Start();
+
+            //Check orders
             CloseSignalHandler += ExitRules_NewSignal;
             OpenSignalHandler += EntryRules_NewSignal;
             MarketDataHandler += MarketDataProvider_PriceChanged;
@@ -59,6 +62,7 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
         public async Task StopAsync()
         {
             Status = StrategyStatus.Stopping;
+            strategySaga.Stop();
             CloseSignalHandler -= ExitRules_NewSignal;
             OpenSignalHandler -= EntryRules_NewSignal;
             MarketDataHandler -= MarketDataProvider_PriceChanged;
