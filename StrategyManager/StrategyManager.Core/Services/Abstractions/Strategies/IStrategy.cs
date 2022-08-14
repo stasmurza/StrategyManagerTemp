@@ -6,7 +6,7 @@ namespace StrategyManager.Core.Services.Abstractions.Strategies
     {
         StrategyStatus Status { get; }
         StrategyCode Code { get; }
-        string TicketCode { get; }
+        string InstrumentCode { get; }
         DateTime LastActive { get; }
         Task StartAsync(string ticketCode, CancellationTokenSource cancellationTokenSource);
         Task StopAsync();

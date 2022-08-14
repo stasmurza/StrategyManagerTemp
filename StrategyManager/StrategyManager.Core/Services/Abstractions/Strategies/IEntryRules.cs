@@ -1,5 +1,6 @@
 ﻿using StrategyManager.Core.Models.Services;
 using StrategyManager.Core.Models.Services.Strategies;
+using StrategyManager.Core.Models.Services.Strategies.Turtles;
 
 namespace StrategyManager.Core.Services.Abstractions.Strategies
 {
@@ -8,7 +9,7 @@ namespace StrategyManager.Core.Services.Abstractions.Strategies
         /// <summary>
         /// Entry signal 
         /// </summary>
-        public event EventHandler<NewPositionEventArgs>? NewSignal;
+        public event EventHandler<EntrySignalEventArgs>? NewSignal;
 
         /// <summary>
         /// Build state of strategy

@@ -32,7 +32,7 @@ namespace StrategyManager.Core.Services
                 yield return new Strategy
                 {
                     StrategyCode = strategy.Code,
-                    TicketCode = strategy.TicketCode,
+                    TicketCode = strategy.InstrumentCode,
                     Status = strategy.Status,
                 };
             }

@@ -13,5 +13,6 @@ namespace StrategyManager.Core.Repositories.Abstractions
         Task<IEnumerable<TEntity>> GetAllAsync();
         Task<IEnumerable<TEntity>> GetAsync(Expression<Func<TEntity, bool>> expression);
         Task<TEntity?> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> expression);
+        Task<TEntity?> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> expression, string order);
     }
 }

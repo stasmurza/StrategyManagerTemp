@@ -6,5 +6,6 @@
         Running,
         Stopping,
         Stopped,
+        Error,
     }
 }

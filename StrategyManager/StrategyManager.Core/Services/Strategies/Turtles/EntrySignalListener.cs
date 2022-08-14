@@ -1,38 +1,54 @@
 ﻿using Microsoft.Extensions.Options;
 using StrategyManager.Core.Models.Options;
 using StrategyManager.Core.Models.Services;
+using StrategyManager.Core.Models.Services.MarketDataProvider;
 using StrategyManager.Core.Models.Services.Strategies;
 using StrategyManager.Core.Models.Services.Strategies.Turtles;
 using StrategyManager.Core.Models.Store.Events;
 using StrategyManager.Core.Repositories.Abstractions;
 using StrategyManager.Core.Services.Abstractions;
 using StrategyManager.Core.Services.Abstractions.Strategies;
+using System.Text.Json;
 
 namespace StrategyManager.Core.Services.Strategies.Turtles
 {
-    public class TurtlesEntryRules : IEntryRules
+    public class EntrySignalListener : IEntrySignalListener, IIdempotentCommand
     {
-        /// <inheritdoc/>
-        public event EventHandler<EntrySignalEventArgs>? NewSignal;
+        public event EventHandler<EventArgs>? Start;
+        public event EventHandler<EventArgs>? Finish;
+        public event EventHandler<EventArgs>? Error;
+        public event EventHandler<EntrySignalEventArgs>? EntrySignal;
+
         private readonly IHistoryProvider historyProvider;
         private readonly TurtlesStrategyOptions options;
         private IRepository<Event> eventRepository;
+        private string InstrumentCode { get; set; }
         private DateOnly CurrentDate { get; set; }
         private decimal EntryMaxPrice { get; set; }
         private decimal EntryMinPrice { get; set; }
+        private EventHandler<MarketDataEventArgs>? MarketDataHandler;
 
-        public TurtlesEntryRules(
+        public EntrySignalListener(
             IHistoryProvider historyProvider,
-            IOptions<TurtlesStrategyOptions> options,
-            IRepository<Event> eventRepository)
+            IOptions<TurtlesStrategyOptions> options)
         {
             this.historyProvider = historyProvider;
             this.options = options.Value;
-            this.eventRepository = eventRepository;
+        }
+
+        public void Run(EntrySignalInput input)
+        {
+            InstrumentCode = input.InstrumentCode;
+            BuildState();
+        }
+
+        public void Stop()
+        {
+            throw new NotImplementedException();
         }
 
         /// <inheritdoc/>
-        public void BuildState()
+        private void BuildState()
         {
             CurrentDate = DateOnly.FromDateTime(DateTime.Now.Date);
             var startDate = CurrentDate.AddDays(-options.EntryPeriod).ToDateTime(TimeOnly.MinValue);
@@ -49,45 +65,36 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
                 .MinPrice;
         }
 
-        /// <inheritdoc/>
-        public void Process(MarketData marketData, Position? activePosition)
+        private void Process(MarketData marketData)
         {
             if (CurrentDate != DateOnly.FromDateTime(marketData.DateAndTime)) BuildState();
-            if (activePosition == null) EntryLogic(marketData);
-            if (EntryMaxPrice < marketData.MaxPrice) EntryMaxPrice = marketData.MaxPrice;
-            if (EntryMinPrice > marketData.MinPrice) EntryMinPrice = marketData.MinPrice;
+            EntryLogic(marketData);
         }
 
         private void EntryLogic(MarketData marketData)
         {
-            if (marketData.MaxPrice > EntryMaxPrice)
-            {
-                //open long
-                if (NewSignal != null)
-                {
-                    var args = new EntrySignalEventArgs
-                    {
-                        Direction = PositionDirection.Long
-                    };
-                    
-                    NewSignal(this, args);
-                }
-            }
-            else if (marketData.MinPrice < EntryMinPrice)
-            {
-                //open short
-                if (NewSignal != null)
-                {
-                    var args = new EntrySignalEventArgs
-                    {
-                        Direction = PositionDirection.Short
-                    };
-
-                    NewSignal(this, args);
-                }
-            }
+            if (marketData.MaxPrice > EntryMaxPrice) NewSignal(PositionDirection.Long);
+            else if (marketData.MinPrice < EntryMinPrice) NewSignal(PositionDirection.Short);
         }
 
-        
+        private void NewSignal(PositionDirection direction)
+        {
+            var args = new EntrySignalEventArgs
+            {
+                Direction = direction
+            };
+            string jsonString = JsonSerializer.Serialize(args);
+            var newEvent = new Event
+            {
+                EventType = "NewSignal",
+                EntityType = "TurtlesStrategy",
+                EntityId = "StrategyId",
+                EventData = jsonString,
+            };
+
+            eventRepository.CreateAsync(newEvent);
+
+            if (EntrySignal != null) EntrySignal(this, args);
+        }
     }
 }
