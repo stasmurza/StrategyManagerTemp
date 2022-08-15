@@ -2,6 +2,6 @@
 {
     public enum EntityType
     {
-        Price,
+        TurtlesStrategy,
     }
 }

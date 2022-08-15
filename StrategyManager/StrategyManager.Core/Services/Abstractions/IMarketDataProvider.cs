@@ -6,6 +6,7 @@ namespace StrategyManager.Core.Services.Abstractions
     public interface IMarketDataProvider : IDisposable
     {
         void Subscribe(string ticketCode, TimeFrame timeFrame);
+        void Unsubscribe(string ticketCode, TimeFrame timeFrame);
         public event EventHandler<MarketDataEventArgs> PriceChanged;
     }
 }

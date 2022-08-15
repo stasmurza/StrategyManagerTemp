@@ -4,6 +4,6 @@ namespace StrategyManager.Core.Services.Abstractions
 {
     public interface IHistoryProvider : IDisposable
     {
-        IEnumerable<MarketData> GetHistory(TimeFrame timeFrame, DateTime startDate, DateTime endDate);
+        IEnumerable<MarketData> GetHistory(string instrumentCode, TimeFrame timeFrame, DateTime startDate, DateTime endDate);
     }
 }

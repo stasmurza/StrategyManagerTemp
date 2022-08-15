@@ -1,10 +1,12 @@
-﻿namespace StrategyManager.Core.Models.Services.Strategies.Turtles
+﻿using StrategyManager.Core.Models.Services.Strategies;
+
+namespace StrategyManager.Core.Models.Store
 {
-    public class PendingOrderEventArgs
+    public class Order : IEntity
     {
+        public string Id { get; set; }
+        public string InstrumentCode { get; set; } = String.Empty;
         public string StrategyId { get; set; } = String.Empty;
-        public string OrderId { get; set; } = string.Empty;
-        public string InstrumentCode { get; set; } = string.Empty;
         public PositionDirection Direction { get; set; }
         public decimal Volume { get; set; }
         public decimal Price { get; set; }

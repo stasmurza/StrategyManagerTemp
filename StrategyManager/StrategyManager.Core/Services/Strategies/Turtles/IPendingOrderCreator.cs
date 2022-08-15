@@ -5,7 +5,7 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
 {
     public interface IPendingOrderCreator : IIdempotentCommand
     {
-        public void CreatePendingOrder(PendingOrderInput input);
+        public Task CreatePendingOrderAsync(PendingOrderInput input);
 
         public event EventHandler<PendingOrderEventArgs>? NewPendingOrder;
     }

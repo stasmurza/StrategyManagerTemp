@@ -2,6 +2,7 @@
 {
     public class ExitSignalInput
     {
+        public string StrategyId { get; set; } = string.Empty;
         public string InstrumentCode { get; set; } = string.Empty;
         public PositionDirection Direction { get; set; }
     }

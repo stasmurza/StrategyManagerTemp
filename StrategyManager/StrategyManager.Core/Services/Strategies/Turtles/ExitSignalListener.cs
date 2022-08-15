@@ -12,11 +12,11 @@ using System.Text.Json;
 
 namespace StrategyManager.Core.Services.Strategies.Turtles
 {
-    public class EntrySignalListener : IEntrySignalListener, IIdempotentCommand
+    public class ExitSignalListener : IExitSignalListener, IIdempotentCommand
     {
         public event EventHandler<EventArgs>? Started;
         public event EventHandler<EventArgs>? Stopped;
-        public event EventHandler<EntrySignalEventArgs>? EntrySignal;
+        public event EventHandler<ExitSignalEventArgs>? ExitSignal;
 
         private readonly IHistoryProvider historyProvider;
         private readonly TurtlesStrategyOptions options;
@@ -24,12 +24,13 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
         private IRepository<Event> eventRepository;
         private string InstrumentCode { get; set; }
         private string StrategyId { get; set; }
+        private PositionDirection PositionDirection { get; set; }
         private DateOnly CurrentDate { get; set; }
-        private decimal EntryMaxPrice { get; set; }
-        private decimal EntryMinPrice { get; set; }
+        private decimal ExitMaxPrice { get; set; }
+        private decimal ExitMinPrice { get; set; }
         private EventHandler<MarketDataEventArgs>? PriceChangedHandler;
 
-        public EntrySignalListener(
+        public ExitSignalListener(
             IHistoryProvider historyProvider,
             IOptions<TurtlesStrategyOptions> options,
             IRepository<Event> eventRepository,
@@ -42,13 +43,15 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
             marketDataProvider.PriceChanged += PriceChangedHandler;
         }
 
-        public void Run(EntrySignalInput input)
+        public void Run(ExitSignalInput input)
         {
+            if (Started != null) Started(this, EventArgs.Empty);
             InstrumentCode = input.InstrumentCode;
+            StrategyId = input.StrategyId;
+            PositionDirection = input.Direction;
             BuildState();
             marketDataProvider.Subscribe(InstrumentCode, TimeFrame.Minute);
             if (PriceChangedHandler == null) PriceChangedHandler += MarketDataProvider_PriceChanged;
-            if (Started != null) Started(this, EventArgs.Empty);
         }
 
         private void MarketDataProvider_PriceChanged(object? sender, MarketDataEventArgs e)
@@ -67,16 +70,16 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
         private void BuildState()
         {
             CurrentDate = DateOnly.FromDateTime(DateTime.Now.Date);
-            var startDate = CurrentDate.AddDays(-options.EntryPeriod).ToDateTime(TimeOnly.MinValue);
+            var startDate = CurrentDate.AddDays(-options.ExitPeriod).ToDateTime(TimeOnly.MinValue);
             var endDate = DateTime.Now;
             var history = historyProvider.GetHistory(InstrumentCode, TimeFrame.Day, startDate, endDate);
             if (history is null) throw new ArgumentNullException(nameof(history));
 
-            EntryMaxPrice = history
+            ExitMaxPrice = history
                 .MaxBy(i => i.MaxPrice)
                 .MaxPrice;
 
-            EntryMinPrice = history
+            ExitMinPrice = history
                 .MinBy(i => i.MinPrice)
                 .MinPrice;
         }
@@ -84,32 +87,35 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
         private void Process(MarketData marketData)
         {
             if (CurrentDate != DateOnly.FromDateTime(marketData.DateAndTime)) BuildState();
-            EntryLogic(marketData);
+            ExitLogic(marketData);
         }
 
-        private void EntryLogic(MarketData marketData)
+        private void ExitLogic(MarketData marketData)
         {
-            if (marketData.MaxPrice > EntryMaxPrice) NewSignal(PositionDirection.Long);
-            else if (marketData.MinPrice < EntryMinPrice) NewSignal(PositionDirection.Short);
+            if (PositionDirection == PositionDirection.Short &&
+                marketData.MaxPrice > ExitMaxPrice) NewSignal(PositionDirection.Long);
+            else if (PositionDirection == PositionDirection.Long &&
+                marketData.MinPrice < ExitMinPrice) NewSignal(PositionDirection.Short);
         }
 
         private void NewSignal(PositionDirection direction)
         {
-            var args = new EntrySignalEventArgs
+            var args = new ExitSignalEventArgs
             {
                 Direction = direction
             };
+
             var newEvent = new Event
             {
                 EntityType = EntityType.TurtlesStrategy,
                 EntityId = StrategyId,
-                EventType = JsonSerializer.Serialize(EventType.NewEntrySignal),
+                EventType = JsonSerializer.Serialize(EventType.NewExitSignal),
                 EventData = JsonSerializer.Serialize(args),
             };
 
             eventRepository.CreateAsync(newEvent);
             Stop();
-            if (EntrySignal != null) EntrySignal(this, args);
+            if (ExitSignal != null) ExitSignal(this, args);
         }
     }
 }

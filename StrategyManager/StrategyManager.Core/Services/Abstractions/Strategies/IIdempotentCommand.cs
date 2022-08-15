@@ -3,8 +3,7 @@
     public interface IIdempotentCommand
     {
         public void Stop();
-        public event EventHandler<EventArgs>? Start;
-        public event EventHandler<EventArgs>? Finish;
-        public event EventHandler<EventArgs>? Error;
+        public event EventHandler<EventArgs>? Started;
+        public event EventHandler<EventArgs>? Stopped;
     }
 }

@@ -6,8 +6,7 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
     public interface IExitSignalListener : IIdempotentCommand
     {
         public void Run(ExitSignalInput input);
-        public void Stop();
 
-        public event EventHandler<EntrySignalEventArgs>? ExitSignal;
+        public event EventHandler<ExitSignalEventArgs>? ExitSignal;
     }
 }
