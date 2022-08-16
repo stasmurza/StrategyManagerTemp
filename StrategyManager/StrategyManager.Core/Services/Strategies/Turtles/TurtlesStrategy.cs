@@ -3,7 +3,6 @@ using StrategyManager.Core.Models.Services.Strategies;
 using StrategyManager.Core.Models.Services.Strategies.Turtles;
 using StrategyManager.Core.Models.Store.Events;
 using StrategyManager.Core.Repositories.Abstractions;
-using StrategyManager.Core.Services.Abstractions;
 using StrategyManager.Core.Services.Abstractions.Strategies;
 using System.Text.Json;
 
@@ -140,7 +139,8 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
                 Direction = e.Direction,
                 Volume = instrumentOptions.Volume,
             };
-            EntryOrderCreator.CreatePendingOrder(input);
+            var task = EntryOrderCreator.CreatePendingOrderAsync(input);
+            task.Wait();
         }
 
         private void EntryOrderCreator_NewPendingOrder(object? sender, PendingOrderEventArgs e)
@@ -168,7 +168,7 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
             if (Status == StrategyStatus.Stopping) return;
             if (Status != StrategyStatus.Running)
             {
-                var message = $"Event an not be processed. Strategy {Id} is in status {Status}";
+                var message = $"Event can not be processed. Strategy {Id} is in status {Status}";
                 throw new InvalidOperationException(message);
             }
 
@@ -183,15 +183,17 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
 
         private void EntryOrderHandler_OrderRejected(object? sender, OrderHandlerEventArgs e)
         {
-            throw new NotImplementedException();
+            var message = $"Unsuccessful attemp to register order {e.OrderId}. Order rejected.";
+            throw new InvalidOperationException(message);
         }
 
         private void EntryOrderHandler_OrderCancelled(object? sender, OrderHandlerEventArgs e)
         {
-            throw new NotImplementedException();
+            var message = $"Unsuccessful attemp to register order {e.OrderId}. Order cancelled.";
+            throw new InvalidOperationException(message);
         }
 
-        private void ExitSignalListener_ExitSignal(object? sender, EntrySignalEventArgs e)
+        private void ExitSignalListener_ExitSignal(object? sender, ExitSignalEventArgs e)
         {
             if (Status == StrategyStatus.Stopping) return;
             if (Status != StrategyStatus.Running)
@@ -207,7 +209,8 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
                 Direction = e.Direction,
                 Volume = instrumentOptions.Volume,
             };
-            ExitOrderCreator.CreatePendingOrder(input);
+            var task = ExitOrderCreator.CreatePendingOrderAsync(input);
+            task.Wait();
         }
 
         private void ExitOrderCreator_NewPendingOrder(object? sender, PendingOrderEventArgs e)
@@ -249,12 +252,14 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
 
         private void ExitOrderHandler_OrderRejected(object? sender, OrderHandlerEventArgs e)
         {
-            throw new NotImplementedException();
+            var message = $"Unsuccessful attemp to register order {e.OrderId}. Order rejected.";
+            throw new InvalidOperationException(message);
         }
 
         private void ExitOrderHandler_OrderCancelled(object? sender, OrderHandlerEventArgs e)
         {
-            throw new NotImplementedException();
+            var message = $"Unsuccessful attemp to register order {e.OrderId}. Order cancelled.";
+            throw new InvalidOperationException(message);
         }
 
         public void Dispose()

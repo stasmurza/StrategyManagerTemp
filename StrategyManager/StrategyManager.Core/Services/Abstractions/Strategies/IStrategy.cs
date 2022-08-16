@@ -5,7 +5,7 @@ namespace StrategyManager.Core.Services.Abstractions.Strategies
     public interface IStrategy : IDisposable
     {
         StrategyStatus Status { get; }
-        StrategyCode Code { get; }
+        StrategyCode StrategyCode { get; }
         string InstrumentCode { get; }
         DateTime LastActive { get; }
         Task StartAsync(string ticketCode, CancellationTokenSource cancellationTokenSource);
