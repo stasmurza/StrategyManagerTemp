@@ -15,8 +15,8 @@
       "launchUrl": "swagger",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "EVENT_STORE_CONNECTION_STRING": "mongodb://localhost:27017",
-        "EVENT_STORE_DATABASE_NAME": "Strategy_manager_event_store",
+        "STRATEGY_MANAGER_CONNECTION_STRING": "mongodb://localhost:27017",
+        "STRATEGY_MANAGER_DATABASE_NAME": "Strategy_manager_event_store",
         "JWT_SECRET": "d14c7bc2-c7bc-447f-b8bc-aa1fd353042f",
         "JWT_EXPIRATION_TIME_MINUTES": "2000",
         "SMTP_HOST": "enter_host",

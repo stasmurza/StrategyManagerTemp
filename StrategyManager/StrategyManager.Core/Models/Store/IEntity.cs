@@ -1,7 +1,7 @@
 ﻿namespace StrategyManager.Core.Models.Store
 {
-    public interface IEntity
+    public class Entity
     {
-        public string Id { get; }
+        public int Id { get; }
     }
 }

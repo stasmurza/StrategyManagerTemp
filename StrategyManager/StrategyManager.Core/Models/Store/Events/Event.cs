@@ -3,7 +3,7 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace StrategyManager.Core.Models.Store.Events
 {
-    public class Event : IEntity
+    public class Event : Entity
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]

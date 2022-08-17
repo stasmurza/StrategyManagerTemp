@@ -18,9 +18,10 @@ namespace StrategyManager.WebAPI.DependencyInjection
         /// <returns></returns>
         public static IServiceCollection AddRepositories(this IServiceCollection services)
         {
-            services.AddSingleton<IEventStoreDbContext, EventStoreDbContext>();
-            services.AddSingleton<IRepository<Event>, EventRepository>();
-            services.AddScoped<IRepository<Strategy>, JobRepository>();
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
+            services.AddScoped<IRepository<Order>, OrderRepository>();
+            services.AddScoped<IRepository<Event>, EventRepository>();
+            services.AddScoped<IRepository<Strategy>, StrategyRepository>();
             return services;
         }
     }

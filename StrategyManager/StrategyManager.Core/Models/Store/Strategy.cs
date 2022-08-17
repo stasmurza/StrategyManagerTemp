@@ -1,13 +1,7 @@
-﻿using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
-
-namespace StrategyManager.Core.Models.Store
+﻿namespace StrategyManager.Core.Models.Store
 {
-    public class Strategy : IEntity
+    public class Strategy : Entity
     {
-        [BsonId]
-        [BsonRepresentation(BsonType.ObjectId)]
-        public string Id { get; set; } = String.Empty;
         public string Code { get; set; } = String.Empty;
         public string Name { get; set; } = String.Empty;
         public bool StartWithHost { get; set; } = false;

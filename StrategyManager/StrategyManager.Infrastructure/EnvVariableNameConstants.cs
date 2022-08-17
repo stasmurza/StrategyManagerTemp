@@ -2,8 +2,8 @@
 {
     public class EnvVariableNameConstants
     {
-        public const string EventStoreDbConnection = "EVENT_STORE_CONNECTION_STRING";
-        public const string EventStoreDbName = "EVENT_STORE_DATABASE_NAME";
+        public const string StrategyManagerDbConnection = "STRATEGY_MANAGER_CONNECTION_STRING";
+        public const string StrategyManagerDbName = "STRATEGY_MANAGER_DATABASE_NAME";
         public const string JwtSecret = "JWT_SECRET";
         public const string JwtExpirationTimeMinutes = "JWT_EXPIRATION_TIME_MINUTES";
 

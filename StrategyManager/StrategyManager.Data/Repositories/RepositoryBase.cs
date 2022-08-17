@@ -3,67 +3,87 @@ using StrategyManager.Core.Repositories.Abstractions;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using System.Linq.Expressions;
+using Microsoft.EntityFrameworkCore;
 
 namespace StrategyManager.Data.Repositories
 {
-    public class RepositoryBase<TEntity> : IRepository<TEntity> where TEntity : IEntity
+    public class RepositoryBase<TEntity> : IRepository<TEntity> where TEntity : Entity
     {
 
-        private readonly IMongoCollection<TEntity> collection;
+        protected readonly DbContext dbContext;
 
-        public RepositoryBase(IMongoCollection<TEntity> collection)
+        public RepositoryBase(DbContext dbContext)
         {
-            this.collection = collection;
+            this.dbContext = dbContext;
         }
 
-        public async Task CreateAsync(TEntity entity)
+        public async Task AddAsync(TEntity entity)
         {
-            if (entity == null) throw new ArgumentNullException(typeof(TEntity).Name + " entity is null");
-            await collection.InsertOneAsync(entity);
+            await dbContext.Set<TEntity>().AddAsync(entity);
         }
 
-        public async Task<ReplaceOneResult> UpdateAsync(TEntity entity)
+        public Task<TEntity?> GetByIdAsync(int id)
         {
-            var objectId = new ObjectId(entity.Id);
-            var filter = Builders<TEntity>.Filter.Eq("_id", objectId);
-            return await collection.ReplaceOneAsync(filter, entity);
+            return dbContext.Set<TEntity>().FirstOrDefaultAsync(x => x.Id == id);
         }
 
-        public async Task<DeleteResult> DeleteAsync(string id)
+        public async Task<TEntity?> FirstOrDefaultAsync(
+            Expression<Func<TEntity, bool>>? wherePredicate = null,
+            Expression<Func<TEntity, object>>[]? includes = null)
         {
-            var objectId = new ObjectId(id);
-            var filter = Builders<TEntity>.Filter.Eq("_id", objectId);
-            return await collection.DeleteOneAsync(filter);
+            var query = dbContext.Set<TEntity>().AsQueryable();
 
+            if (wherePredicate != null) query = query.Where(wherePredicate);
+
+            if (includes != null && includes.Any())
+            {
+                query = includes.Aggregate(query, (q, include) => q.Include(include));
+            }
+
+            var result = await query.FirstOrDefaultAsync();
+
+            return result;
         }
 
-        public async Task<TEntity> GetByIdAsync(string id)
+        public async Task<TEntity?> FirstOrDefaultAsync<TOrderBy>(
+            Expression<Func<TEntity, bool>>? wherePredicate = null,
+            Expression<Func<TEntity, TOrderBy>>? orderExpression = null,
+            bool ascending = true,
+            Expression<Func<TEntity, object>>[]? includes = null)
         {
-            var objectId = new ObjectId(id);
-            var filter = Builders<TEntity>.Filter.Eq("_id", objectId);
-            var cursor = await collection.FindAsync(filter);
-            return await cursor.FirstOrDefaultAsync();
+            var query = dbContext.Set<TEntity>().AsQueryable();
 
+            if (wherePredicate != null) query = query.Where(wherePredicate);
+
+            if (orderExpression != null)
+            {
+                if (ascending) query = query.OrderBy(orderExpression);
+                else query = query.OrderByDescending(orderExpression);
+            }
+
+            if (includes != null && includes.Any())
+            {
+                query = includes.Aggregate(query, (q, include) => q.Include(include));
+            }
+
+            var result = await query.FirstOrDefaultAsync();
+
+            return result;
         }
 
-        public async Task<IEnumerable<TEntity>> GetAllAsync()
+        public void Remove(TEntity entity)
         {
-            var all = await collection.FindAsync(Builders<TEntity>.Filter.Empty);
-            return await all.ToListAsync();
+            dbContext.Set<TEntity>().Remove(entity);
         }
 
-        public async Task<IEnumerable<TEntity>> GetAsync(Expression<Func<TEntity, bool>> expression)
+        public void RemoveRange(TEntity[] entity)
         {
-            var result = await collection.FindAsync(expression);
-            return await result.ToListAsync();
+            dbContext.Set<TEntity>().RemoveRange(entity);
         }
 
-        public async Task<TEntity?> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> expression)
+        public void Update(TEntity entity)
         {
-            var options = new FindOptions<TEntity> { Limit = 1 };
-            var cursor = await collection.FindAsync(expression, options);
-            var list = await cursor.ToListAsync();
-            return list.FirstOrDefault();
+            dbContext.Set<TEntity>().Update(entity);
         }
     }
 }

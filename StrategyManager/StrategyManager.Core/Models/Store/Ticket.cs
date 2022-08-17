@@ -1,8 +1,10 @@
 ﻿namespace StrategyManager.Core.Models.Store
 {
-    public class Ticket
+    public class Ticket : Entity
     {
         public string Code { get; set; } = String.Empty;
         public string Name { get; set; } = String.Empty;
+        public Order? Order { get; set; }
+        public int OrderId { get; set; }
     }
 }

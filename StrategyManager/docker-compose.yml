@@ -7,12 +7,15 @@ services:
       context: .
       dockerfile: StrategyManager.WebAPI/Dockerfile
   db:
-    image: mongo
-    restart: always
+    image: postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
     ports:
-      - '27017-27019:27017-27019'
-    volumes:
-      - db:/var/lib/mongo/data
+      - '5432:5432'
+    volumes: 
+      - db:/var/lib/postgresql/data
   rabbitmq:
     image: rabbitmq:3-management-alpine
     container_name: 'rabbitmq'

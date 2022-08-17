@@ -8,7 +8,6 @@ using System.Text.Json;
 
 namespace StrategyManager.Core.Services.Strategies.Turtles
 {
-    // move handler to steps
     public class TurtlesStrategy : ITurtlesStrategy
     {
         public StrategyStatus Status { get; private set; } = StrategyStatus.Stopped;
@@ -21,7 +20,7 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
 
         public StrategyStep StrategyStep { get; private set; }
 
-        private String Id { get; set; } = string.Empty;
+        private String StrategyId { get; set; } = string.Empty;
 
         private readonly InstrumentOptions instrumentOptions;
         private IRepository<Event> eventRepository;
@@ -66,7 +65,7 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
         public async Task StartAsync(string instrumentCode, CancellationTokenSource cancellationTokenSource)
         {
             InstrumentCode = instrumentCode;
-            Id = StrategyCode.ToString() + instrumentCode;
+            StrategyId = StrategyCode.ToString() + instrumentCode;
             await RunAsync();
         }
 
@@ -89,7 +88,7 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
 
         private async Task RunAsync()
         {
-            var lastEvent = await eventRepository.FirstOrDefaultAsync(i => i.EntityId == Id, "Desc");
+            var lastEvent = await eventRepository.FirstOrDefaultAsync(i => i.EntityId == StrategyId, "Desc");
             if (lastEvent is null)
             {
                 RunEntryListener();
@@ -128,13 +127,14 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
             if (Status == StrategyStatus.Stopping) return;
             if (Status != StrategyStatus.Running)
             {
-                var message = $"Event an not be processed. Strategy {Id} is in status {Status}";
+                var message = $"Event an not be processed. Strategy {StrategyId} is in status {Status}";
                 throw new InvalidOperationException(message);
             }
 
             StrategyStep = StrategyStep.CreatingEntryPendingOrder;
             var input = new PendingOrderInput
             {
+                StrategyId = StrategyId,
                 InstrumentCode = InstrumentCode,
                 Direction = e.Direction,
                 Volume = instrumentOptions.Volume,
@@ -148,7 +148,7 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
             if (Status == StrategyStatus.Stopping) return;
             if (Status != StrategyStatus.Running)
             {
-                var message = $"Event an not be processed. Strategy {Id} is in status {Status}";
+                var message = $"Event an not be processed. Strategy {StrategyId} is in status {Status}";
                 throw new InvalidOperationException(message);
             }
 
@@ -168,7 +168,7 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
             if (Status == StrategyStatus.Stopping) return;
             if (Status != StrategyStatus.Running)
             {
-                var message = $"Event can not be processed. Strategy {Id} is in status {Status}";
+                var message = $"Event can not be processed. Strategy {StrategyId} is in status {Status}";
                 throw new InvalidOperationException(message);
             }
 
@@ -198,7 +198,7 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
             if (Status == StrategyStatus.Stopping) return;
             if (Status != StrategyStatus.Running)
             {
-                var message = $"Event an not be processed. Strategy {Id} is in status {Status}";
+                var message = $"Event an not be processed. Strategy {StrategyId} is in status {Status}";
                 throw new InvalidOperationException(message);
             }
 
@@ -218,7 +218,7 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
             if (Status == StrategyStatus.Stopping) return;
             if (Status != StrategyStatus.Running)
             {
-                var message = $"Event an not be processed. Strategy {Id} is in status {Status}";
+                var message = $"Event an not be processed. Strategy {StrategyId} is in status {Status}";
                 throw new InvalidOperationException(message);
             }
 
@@ -238,7 +238,7 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
             if (Status == StrategyStatus.Stopping) return;
             if (Status != StrategyStatus.Running)
             {
-                var message = $"Event an not be processed. Strategy {Id} is in status {Status}";
+                var message = $"Event an not be processed. Strategy {StrategyId} is in status {Status}";
                 throw new InvalidOperationException(message);
             }
 

@@ -4,15 +4,13 @@ using System.Linq.Expressions;
 
 namespace StrategyManager.Core.Repositories.Abstractions
 {
-    public interface IRepository<TEntity> where TEntity : IEntity
+    public interface IRepository<TEntity> where TEntity : Entity
     {
-        Task CreateAsync(TEntity entity);
-        Task<ReplaceOneResult> UpdateAsync(TEntity entity);
-        Task<DeleteResult> DeleteAsync(string id);
-        Task<TEntity> GetByIdAsync(string id);
-        Task<IEnumerable<TEntity>> GetAllAsync();
-        Task<IEnumerable<TEntity>> GetAsync(Expression<Func<TEntity, bool>> expression);
-        Task<TEntity?> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> expression);
-        Task<TEntity?> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> expression, string order);
+        Task AddAsync(TEntity entity);
+        void Update(TEntity entity);
+        void Remove(TEntity entity);
+        void RemoveRange(TEntity[] entities);
+        Task<TEntity?> GetByIdAsync(int id);
+        Task<TEntity?> FirstOrDefaultAsync<TOrderBy>(Expression<Func<TEntity, bool>>? wherePredicate = null, Expression<Func<TEntity, TOrderBy>>? orderExpression = null, bool ascending = true, Expression<Func<TEntity, object>>[]? includes = null);
     }
 }

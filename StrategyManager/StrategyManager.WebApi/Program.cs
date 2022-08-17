@@ -1,5 +1,8 @@
 using FluentValidation.AspNetCore;
 using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
+using Microsoft.EntityFrameworkCore;
+using StrategyManager.Data;
+using StrategyManager.Infrastructure;
 using StrategyManager.WebAPI.Configuration;
 using StrategyManager.WebAPI.Configuration.Swagger;
 using StrategyManager.WebAPI.DependencyInjection;
@@ -14,6 +17,9 @@ builder.Logging.AddConsole();
 
 ConfigurationManager config = builder.Configuration;
 config.AddEnvironmentVariables();
+
+builder.Services.AddDbContext<StrategyManagerDbContext>(
+    options => options.UseNpgsql(config.GetValue<string>(EnvVariableNameConstants.StrategyManagerDbConnection)));
 
 builder.Services.AddRepositories();
 builder.Services.AddAuthentication(config);
