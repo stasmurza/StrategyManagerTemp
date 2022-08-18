@@ -44,9 +44,8 @@ namespace StrategyManager.Core.Handlers.Strategies.Tickets
                 };
             }
 
-
             strategy.Tickets.Remove(ticket);
-            await repository.UpdateAsync(strategy);
+            repository.Update(strategy);
 
             return Unit.Value;
         }

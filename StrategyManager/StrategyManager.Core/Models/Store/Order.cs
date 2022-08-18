@@ -10,6 +10,6 @@ namespace StrategyManager.Core.Models.Store
         public decimal Volume { get; set; }
         public decimal Price { get; set; }
         public DateTime DateTime { get; set; }
-        public ICollection<Ticket> Tickets { get; set; } = new List<Ticket>();
+        public ICollection<Trade> Tickets { get; set; } = new List<Trade>();
     }
 }

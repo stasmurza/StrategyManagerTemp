@@ -1,4 +1,6 @@
-﻿namespace StrategyManager.Data
+﻿using StrategyManager.Core.Repositories.Abstractions;
+
+namespace StrategyManager.Data
 {
     public class UnitOfWork : IUnitOfWork, IDisposable
     {

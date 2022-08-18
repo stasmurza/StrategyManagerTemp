@@ -1,4 +1,4 @@
-﻿namespace StrategyManager.Data
+﻿namespace StrategyManager.Core.Repositories.Abstractions
 {
     public interface IUnitOfWork
     {

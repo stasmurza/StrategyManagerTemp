@@ -4,6 +4,7 @@ using StrategyManager.Core.Models.Store;
 using StrategyManager.Core.Repositories.Abstractions;
 using MediatR;
 using StrategyManager.Core.Models.DTOs.Strategies;
+using System.Linq.Expressions;
 
 namespace StrategyManager.Core.Handlers.Strategies
 {
@@ -22,7 +23,12 @@ namespace StrategyManager.Core.Handlers.Strategies
 
         public async Task<GetStrategiesOutput> Handle(GetStrategiesInput input, CancellationToken cancellationToken)
         {
-            var strategies = await repository.GetAllAsync();
+            var include = new Expression<Func<Strategy, object>>[]
+            {
+                strategy => strategy.Tickets,
+            };
+
+            var strategies = await repository.GetAllAsync(includes: include);
 
             return new GetStrategiesOutput
             {

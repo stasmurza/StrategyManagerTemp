@@ -47,9 +47,10 @@ namespace StrategyManager.Core.Handlers.Strategies.Tickets
             }
 
             var ticket = mapper.Map(input, new Ticket());
+            ticket.StrategyId = input.StrategyId;
             strategy.Tickets.Add(ticket);
             
-            await repository.UpdateAsync(strategy);
+            repository.Update(strategy);
 
             return Unit.Value;
         }

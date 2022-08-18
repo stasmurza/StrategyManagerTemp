@@ -8,6 +8,6 @@
         /// <summary>
         /// Id of strategy
         /// </summary>
-        public string Id { get; set; } = String.Empty;
+        public int Id { get; set; }
     }
 }

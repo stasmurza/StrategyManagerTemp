@@ -22,8 +22,9 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
         private readonly TurtlesStrategyOptions options;
         private IMarketDataProvider marketDataProvider;
         private IRepository<Event> eventRepository;
-        private string InstrumentCode { get; set; }
-        private string StrategyId { get; set; }
+        private readonly IUnitOfWork unitOfWork;
+        private string InstrumentCode { get; set; } = String.Empty;
+        private string StrategyId { get; set; } = String.Empty;
         private DateOnly CurrentDate { get; set; }
         private decimal EntryMaxPrice { get; set; }
         private decimal EntryMinPrice { get; set; }
@@ -33,18 +34,21 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
             IHistoryProvider historyProvider,
             IOptions<TurtlesStrategyOptions> options,
             IRepository<Event> eventRepository,
-            IMarketDataProvider marketDataProvider)
+            IMarketDataProvider marketDataProvider,
+            IUnitOfWork unitOfWork)
         {
             this.historyProvider = historyProvider;
             this.options = options.Value;
             this.eventRepository = eventRepository;
             this.marketDataProvider = marketDataProvider;
+            this.unitOfWork = unitOfWork;
             marketDataProvider.PriceChanged += PriceChangedHandler;
         }
 
         public void Run(EntrySignalInput input)
         {
             InstrumentCode = input.InstrumentCode;
+            StrategyId = input.StrategyId;
             BuildState();
             marketDataProvider.Subscribe(InstrumentCode, TimeFrame.Minute);
             if (PriceChangedHandler == null) PriceChangedHandler += MarketDataProvider_PriceChanged;
@@ -107,7 +111,10 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
                 EventData = JsonSerializer.Serialize(args),
             };
 
-            eventRepository.CreateAsync(newEvent);
+            var task = eventRepository.AddAsync(newEvent);
+            task.Wait();
+            task = unitOfWork.CompleteAsync();
+            task.Wait();
             Stop();
             if (EntrySignal != null) EntrySignal(this, args);
         }

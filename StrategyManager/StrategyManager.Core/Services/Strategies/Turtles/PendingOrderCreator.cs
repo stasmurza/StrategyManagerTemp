@@ -10,6 +10,7 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
     {
         private IRepository<Event> eventRepository;
         private IRepository<Order> orderRepository;
+        private readonly IUnitOfWork unitOfWork;
 
         public event EventHandler<PendingOrderEventArgs>? NewPendingOrder;
         public event EventHandler<EventArgs>? Started;
@@ -17,10 +18,12 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
 
         public PendingOrderCreator(
             IRepository<Event> eventRepository,
-            IRepository<Order> orderRepository)
+            IRepository<Order> orderRepository,
+            IUnitOfWork unitOfWork)
         {
             this.eventRepository = eventRepository;
             this.orderRepository = orderRepository;
+            this.unitOfWork = unitOfWork;
         }
 
         public async Task CreatePendingOrderAsync(PendingOrderInput input)
@@ -36,7 +39,7 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
                 Price = input.Price,
                 DateTime = DateTime.Now,
             };
-            await orderRepository.CreateAsync(order);
+            await orderRepository.AddAsync(order);
 
             var args = new PendingOrderEventArgs
             {
@@ -54,8 +57,8 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
                 EventType = JsonSerializer.Serialize(EventType.NewEntrySignal),
                 EventData = JsonSerializer.Serialize(args),
             };
-            await eventRepository.CreateAsync(newEvent);
-
+            await eventRepository.AddAsync(newEvent);
+            await unitOfWork.CompleteAsync();
             Stop();
 
             if (NewPendingOrder != null) NewPendingOrder(this, args);

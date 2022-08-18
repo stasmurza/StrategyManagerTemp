@@ -22,8 +22,9 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
         private readonly TurtlesStrategyOptions options;
         private IMarketDataProvider marketDataProvider;
         private IRepository<Event> eventRepository;
-        private string InstrumentCode { get; set; }
-        private string StrategyId { get; set; }
+        private readonly IUnitOfWork unitOfWork;
+        private string InstrumentCode { get; set; } = String.Empty;
+        private string StrategyId { get; set; } = String.Empty;
         private PositionDirection PositionDirection { get; set; }
         private DateOnly CurrentDate { get; set; }
         private decimal ExitMaxPrice { get; set; }
@@ -34,12 +35,14 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
             IHistoryProvider historyProvider,
             IOptions<TurtlesStrategyOptions> options,
             IRepository<Event> eventRepository,
-            IMarketDataProvider marketDataProvider)
+            IMarketDataProvider marketDataProvider,
+            IUnitOfWork unitOfWork)
         {
             this.historyProvider = historyProvider;
             this.options = options.Value;
             this.eventRepository = eventRepository;
             this.marketDataProvider = marketDataProvider;
+            this.unitOfWork = unitOfWork;
             marketDataProvider.PriceChanged += PriceChangedHandler;
         }
 
@@ -52,6 +55,7 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
             BuildState();
             marketDataProvider.Subscribe(InstrumentCode, TimeFrame.Minute);
             if (PriceChangedHandler == null) PriceChangedHandler += MarketDataProvider_PriceChanged;
+            if (Started != null) Started(this, EventArgs.Empty);
         }
 
         private void MarketDataProvider_PriceChanged(object? sender, MarketDataEventArgs e)
@@ -66,7 +70,6 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
             if (Stopped != null) Stopped(this, EventArgs.Empty);
         }
 
-        /// <inheritdoc/>
         private void BuildState()
         {
             CurrentDate = DateOnly.FromDateTime(DateTime.Now.Date);
@@ -113,7 +116,10 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
                 EventData = JsonSerializer.Serialize(args),
             };
 
-            eventRepository.CreateAsync(newEvent);
+            var task = eventRepository.AddAsync(newEvent);
+            task.Wait();
+            task = unitOfWork.CompleteAsync();
+            task.Wait();
             Stop();
             if (ExitSignal != null) ExitSignal(this, args);
         }

@@ -1,7 +1,5 @@
 ﻿using StrategyManager.Core.Models.Store;
 using StrategyManager.Core.Repositories.Abstractions;
-using MongoDB.Bson;
-using MongoDB.Driver;
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,7 +7,6 @@ namespace StrategyManager.Data.Repositories
 {
     public class RepositoryBase<TEntity> : IRepository<TEntity> where TEntity : Entity
     {
-
         protected readonly DbContext dbContext;
 
         public RepositoryBase(DbContext dbContext)
@@ -46,15 +43,14 @@ namespace StrategyManager.Data.Repositories
         }
 
         public async Task<TEntity?> FirstOrDefaultAsync<TOrderBy>(
-            Expression<Func<TEntity, bool>>? wherePredicate = null,
-            Expression<Func<TEntity, TOrderBy>>? orderExpression = null,
+            Expression<Func<TEntity, TOrderBy>> orderExpression,
             bool ascending = true,
+            Expression<Func<TEntity, bool>>? wherePredicate = null,
             Expression<Func<TEntity, object>>[]? includes = null)
         {
             var query = dbContext.Set<TEntity>().AsQueryable();
 
             if (wherePredicate != null) query = query.Where(wherePredicate);
-
             if (orderExpression != null)
             {
                 if (ascending) query = query.OrderBy(orderExpression);
@@ -84,6 +80,30 @@ namespace StrategyManager.Data.Repositories
         public void Update(TEntity entity)
         {
             dbContext.Set<TEntity>().Update(entity);
+        }
+
+        public Task<List<TEntity>> GetAllAsync(int skip = 0, int top = int.MaxValue, Expression<Func<TEntity, object>>[]? includes = null)
+        {
+            var query = dbContext.Set<TEntity>().AsQueryable();
+
+            if (includes != null && includes.Any())
+            {
+                query = includes.Aggregate(query, (q, include) => q.Include(include));
+            }
+
+            return query
+                .Skip(skip)
+                .Take(top)
+                .ToListAsync();
+        }
+
+        private Expression<Func<TEntity, TOrder>> GetOrderExpression<TOrder>(string sortField)
+        {
+            var property = typeof(TEntity).GetProperty(sortField);
+            if (property == null) throw new ArgumentException($"Property {sortField} is not found");
+            var orderByParameter = Expression.Parameter(typeof(TEntity));
+            MemberExpression em = Expression.Property(orderByParameter, property);
+            return Expression.Lambda<Func<TEntity, TOrder>>(Expression.Convert(em, typeof(TOrder)), orderByParameter);
         }
     }
 }

@@ -88,26 +88,62 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
 
         private async Task RunAsync()
         {
-            var lastEvent = await eventRepository.FirstOrDefaultAsync(i => i.EntityId == StrategyId, "Desc");
+            var lastEvent = await eventRepository.FirstOrDefaultAsync(
+                i => i.Id == StrategyId,
+                false,
+                i => i.EntityId == StrategyId);
+
             if (lastEvent is null)
             {
                 RunEntryListener();
                 return;
             }
 
-            var eventType = JsonSerializer.Deserialize<Models.Services.Strategies.Turtles.EventType>(lastEvent.EventData);
+            var eventType = JsonSerializer.Deserialize<EventType>(lastEvent.EventData);
             switch (eventType)
             {
-                case Models.Services.Strategies.Turtles.EventType.NewEntrySignal:
-                    var args = JsonSerializer.Deserialize<EntrySignalEventArgs>(lastEvent.EventData);
-                    if (args == null) throw new ArgumentNullException($"{nameof(args)} is null");
-                    EntrySignalListener_EntrySignal(EntrySignalListener, args);
-                    break;
-                case Models.Services.Strategies.Turtles.EventType.NewEntryPendingOrder:
-                    args = JsonSerializer.Deserialize<EntrySignalEventArgs>(lastEvent.EventData);
-                    if (args == null) throw new ArgumentNullException($"{nameof(args)} is null");
-                    EntrySignalListener_EntrySignal(EntrySignalListener, args);
-                    break;
+                case EventType.NewEntrySignal:
+                    {
+                        var args = JsonSerializer.Deserialize<EntrySignalEventArgs>(lastEvent.EventData);
+                        if (args == null) throw new ArgumentNullException($"{nameof(args)} is null");
+                        EntrySignalListener_EntrySignal(EntrySignalListener, args);
+                        break;
+                    }
+                case EventType.NewEntryPendingOrder:
+                    {
+                        var args = JsonSerializer.Deserialize<PendingOrderEventArgs>(lastEvent.EventData);
+                        if (args == null) throw new ArgumentNullException($"{nameof(args)} is null");
+                        EntryOrderCreator_NewPendingOrder(EntrySignalListener, args);
+                        break;
+                    }
+                case EventType.EntryOrderFilled:
+                    {
+                        var args = JsonSerializer.Deserialize<OrderHandlerEventArgs>(lastEvent.EventData);
+                        if (args == null) throw new ArgumentNullException($"{nameof(args)} is null");
+                        EntryOrderHandler_OrderFilled(EntrySignalListener, args);
+                        break;
+                    }
+                case EventType.NewExitSignal:
+                    {
+                        var args = JsonSerializer.Deserialize<ExitSignalEventArgs>(lastEvent.EventData);
+                        if (args == null) throw new ArgumentNullException($"{nameof(args)} is null");
+                        ExitSignalListener_ExitSignal(EntrySignalListener, args);
+                        break;
+                    }
+                case EventType.NewExitPendingOrder:
+                    {
+                        var args = JsonSerializer.Deserialize<PendingOrderEventArgs>(lastEvent.EventData);
+                        if (args == null) throw new ArgumentNullException($"{nameof(args)} is null");
+                        ExitOrderCreator_NewPendingOrder(EntrySignalListener, args);
+                        break;
+                    }
+                case EventType.ExitOrderFilled:
+                    {
+                        var args = JsonSerializer.Deserialize<OrderHandlerEventArgs>(lastEvent.EventData);
+                        if (args == null) throw new ArgumentNullException($"{nameof(args)} is null");
+                        ExitOrderHandler_OrderFilled(EntrySignalListener, args);
+                        break;
+                    }
                 default:
                     throw new ArgumentOutOfRangeException(nameof(eventType), $"Not expected state value: {eventType}");
             }
@@ -148,7 +184,7 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
             if (Status == StrategyStatus.Stopping) return;
             if (Status != StrategyStatus.Running)
             {
-                var message = $"Event an not be processed. Strategy {StrategyId} is in status {Status}";
+                var message = $"Event can not be processed. Strategy {StrategyId} is in status {Status}";
                 throw new InvalidOperationException(message);
             }
 
@@ -198,7 +234,7 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
             if (Status == StrategyStatus.Stopping) return;
             if (Status != StrategyStatus.Running)
             {
-                var message = $"Event an not be processed. Strategy {StrategyId} is in status {Status}";
+                var message = $"Event can not be processed. Strategy {StrategyId} is in status {Status}";
                 throw new InvalidOperationException(message);
             }
 
@@ -218,7 +254,7 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
             if (Status == StrategyStatus.Stopping) return;
             if (Status != StrategyStatus.Running)
             {
-                var message = $"Event an not be processed. Strategy {StrategyId} is in status {Status}";
+                var message = $"Event can not be processed. Strategy {StrategyId} is in status {Status}";
                 throw new InvalidOperationException(message);
             }
 
@@ -238,7 +274,7 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
             if (Status == StrategyStatus.Stopping) return;
             if (Status != StrategyStatus.Running)
             {
-                var message = $"Event an not be processed. Strategy {StrategyId} is in status {Status}";
+                var message = $"Event can not be processed. Strategy {StrategyId} is in status {Status}";
                 throw new InvalidOperationException(message);
             }
 

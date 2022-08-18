@@ -8,7 +8,7 @@
         /// <summary>
         /// Id of ticket
         /// </summary>
-        public string Id { get; set; } = String.Empty;
+        public int Id { get; set; }
 
         /// <summary>
         /// Code of ticket

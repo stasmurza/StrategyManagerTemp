@@ -4,7 +4,7 @@ namespace StrategyManager.Core.Models.DTOs.Strategies
 {
     public class StrategyDTO
     {
-        public string Id { get; set; } = string.Empty;
+        public int Id { get; set; }
         public string Code { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
         public bool StartWithService { get; set; } = false;
