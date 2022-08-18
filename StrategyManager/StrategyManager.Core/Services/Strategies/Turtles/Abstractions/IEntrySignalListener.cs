@@ -1,7 +1,7 @@
 ﻿using StrategyManager.Core.Models.Services.Strategies.Turtles;
-using StrategyManager.Core.Services.Abstractions.Strategies;
+using StrategyManager.Core.Services.Strategies.Abstractions;
 
-namespace StrategyManager.Core.Services.Strategies.Turtles
+namespace StrategyManager.Core.Services.Strategies.Turtles.Abstractions
 {
     public interface IEntrySignalListener : IIdempotentCommand
     {

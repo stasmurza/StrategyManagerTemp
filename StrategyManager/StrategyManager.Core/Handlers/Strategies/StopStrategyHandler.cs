@@ -4,7 +4,7 @@ using StrategyManager.Core.Repositories.Abstractions;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using StrategyManager.Core.Models.Handlers.Strategies;
-using StrategyManager.Core.Services.Abstractions.Strategies;
+using StrategyManager.Core.Services.Strategies.Abstractions;
 
 namespace StrategyManager.Core.Handlers.Strategies
 {

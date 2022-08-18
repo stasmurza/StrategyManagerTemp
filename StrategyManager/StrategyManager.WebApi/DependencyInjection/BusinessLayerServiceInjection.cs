@@ -1,8 +1,9 @@
 ﻿using MediatR;
 using StrategyManager.Core.Services;
 using StrategyManager.Core.Services.Abstractions;
-using StrategyManager.Core.Services.Abstractions.Strategies;
+using StrategyManager.Core.Services.Strategies.Abstractions;
 using StrategyManager.Core.Services.Strategies.Turtles;
+using StrategyManager.Core.Services.Strategies.Turtles.Abstractions;
 
 namespace StrategyManager.WebAPI.DependencyInjection
 {

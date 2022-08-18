@@ -2,6 +2,7 @@
 using StrategyManager.Core.Models.Store;
 using StrategyManager.Core.Models.Store.Events;
 using StrategyManager.Core.Repositories.Abstractions;
+using StrategyManager.Core.Services.Strategies.Turtles.Abstractions;
 using System.Text.Json;
 
 namespace StrategyManager.Core.Services.Strategies.Turtles

@@ -3,7 +3,7 @@ using StrategyManager.Core.Repositories.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using StrategyManager.Core.Services.Abstractions.Strategies;
+using StrategyManager.Core.Services.Strategies.Abstractions;
 
 namespace StrategyManager.Core.Services
 {

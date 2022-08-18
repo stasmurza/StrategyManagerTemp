@@ -1,6 +1,6 @@
 ﻿using StrategyManager.Core.Models.Services.Strategies;
 
-namespace StrategyManager.Core.Services.Abstractions.Strategies
+namespace StrategyManager.Core.Services.Strategies.Abstractions
 {
     public interface IStrategyManager
     {

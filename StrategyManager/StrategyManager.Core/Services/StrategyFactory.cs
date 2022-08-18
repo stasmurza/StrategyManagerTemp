@@ -1,8 +1,9 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using StrategyManager.Core.Models.Options;
 using StrategyManager.Core.Models.Services.Strategies;
-using StrategyManager.Core.Services.Abstractions.Strategies;
 using StrategyManager.Core.Services.Strategies;
+using StrategyManager.Core.Services.Strategies.Abstractions;
+using StrategyManager.Core.Services.Strategies.Turtles.Abstractions;
 
 namespace StrategyManager.Core.Services
 {

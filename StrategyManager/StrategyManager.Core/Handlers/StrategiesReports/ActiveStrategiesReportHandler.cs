@@ -4,7 +4,7 @@ using StrategyManager.Core.Repositories.Abstractions;
 using MediatR;
 using StrategyManager.Core.Models.Handlers.StrategiesReport;
 using StrategyManager.Core.Models.DTOs.Reports;
-using StrategyManager.Core.Services.Abstractions.Strategies;
+using StrategyManager.Core.Services.Strategies.Abstractions;
 
 namespace StrategyManager.Core.Handlers.StrategiesReports
 {

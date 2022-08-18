@@ -7,7 +7,8 @@ using StrategyManager.Core.Models.Services.Strategies.Turtles;
 using StrategyManager.Core.Models.Store.Events;
 using StrategyManager.Core.Repositories.Abstractions;
 using StrategyManager.Core.Services.Abstractions;
-using StrategyManager.Core.Services.Abstractions.Strategies;
+using StrategyManager.Core.Services.Strategies.Abstractions;
+using StrategyManager.Core.Services.Strategies.Turtles.Abstractions;
 using System.Text.Json;
 
 namespace StrategyManager.Core.Services.Strategies.Turtles
