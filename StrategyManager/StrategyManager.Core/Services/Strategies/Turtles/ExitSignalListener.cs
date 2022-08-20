@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using StrategyManager.Core.Models.DTOs.Strategies;
 using StrategyManager.Core.Models.Options;
 using StrategyManager.Core.Models.Services;
 using StrategyManager.Core.Models.Services.MarketDataProvider;
@@ -13,116 +15,168 @@ using System.Text.Json;
 
 namespace StrategyManager.Core.Services.Strategies.Turtles
 {
-    public class ExitSignalListener : IExitSignalListener, IIdempotentCommand
+    public class ExitSignalListener : IExitSignalListener, IIdempotentStep, IDisposable
     {
-        public event EventHandler<EventArgs>? Started;
-        public event EventHandler<EventArgs>? Stopped;
+        public StrategyStatus Status { get; private set; }
+        public event EventHandler<NewStatusEventArgs>? OnStatusChange;
         public event EventHandler<ExitSignalEventArgs>? ExitSignal;
 
         private readonly IHistoryProvider historyProvider;
         private readonly TurtlesStrategyOptions options;
-        private IMarketDataProvider marketDataProvider;
-        private IRepository<Event> eventRepository;
+        private readonly IMarketDataProvider marketDataProvider;
+        private readonly IRepository<Event> eventRepository;
         private readonly IUnitOfWork unitOfWork;
-        private string InstrumentCode { get; set; } = String.Empty;
-        private string StrategyId { get; set; } = String.Empty;
-        private PositionDirection PositionDirection { get; set; }
-        private DateOnly CurrentDate { get; set; }
-        private decimal ExitMaxPrice { get; set; }
-        private decimal ExitMinPrice { get; set; }
+        private readonly ILogger<EntrySignalListener> logger;
+        private string instrumentCode = String.Empty;
+        private string strategyId = String.Empty;
+        private OrderDTO? entryOrder;
+        private DateOnly currentDate;
+        private decimal exitMaxPrice;
+        private decimal exitMinPrice;
         private EventHandler<MarketDataEventArgs>? PriceChangedHandler;
+        private bool disposed;
 
         public ExitSignalListener(
             IHistoryProvider historyProvider,
             IOptions<TurtlesStrategyOptions> options,
             IRepository<Event> eventRepository,
             IMarketDataProvider marketDataProvider,
-            IUnitOfWork unitOfWork)
+            IUnitOfWork unitOfWork,
+            ILogger<EntrySignalListener> logger)
         {
             this.historyProvider = historyProvider;
             this.options = options.Value;
             this.eventRepository = eventRepository;
             this.marketDataProvider = marketDataProvider;
             this.unitOfWork = unitOfWork;
+            this.logger = logger;
             marketDataProvider.PriceChanged += PriceChangedHandler;
+            OnStatusChange += ExitSignalListener_OnStatusChange;
         }
 
         public void Run(ExitSignalInput input)
         {
-            if (Started != null) Started(this, EventArgs.Empty);
-            InstrumentCode = input.InstrumentCode;
-            StrategyId = input.StrategyId;
-            PositionDirection = input.Direction;
+            if (input.EntryOrder is null) throw new ArgumentNullException(nameof(input.EntryOrder));
+
+            if (OnStatusChange != null) OnStatusChange(this, new NewStatusEventArgs(StrategyStatus.Starting));
+
+            instrumentCode = input.InstrumentCode;
+            strategyId = input.StrategyId;
+            entryOrder = input.EntryOrder;
+
             BuildState();
-            marketDataProvider.Subscribe(InstrumentCode, TimeFrame.Minute);
+
+            marketDataProvider.Subscribe(instrumentCode, TimeFrame.Minute);
+
             if (PriceChangedHandler == null) PriceChangedHandler += MarketDataProvider_PriceChanged;
-            if (Started != null) Started(this, EventArgs.Empty);
+            if (OnStatusChange != null) OnStatusChange(this, new NewStatusEventArgs(StrategyStatus.Running));
         }
 
         private void MarketDataProvider_PriceChanged(object? sender, MarketDataEventArgs e)
         {
             Process(e.MarketData);
+            LogInformation("Price changed", e);
         }
 
         public void Stop()
         {
+            if (Status == StrategyStatus.Stopping && Status == StrategyStatus.Stopped) return;
+            if (OnStatusChange != null) OnStatusChange(this, new NewStatusEventArgs(StrategyStatus.Stopping));
             PriceChangedHandler = null;
-            marketDataProvider.Unsubscribe(InstrumentCode, TimeFrame.Minute);
-            if (Stopped != null) Stopped(this, EventArgs.Empty);
+            marketDataProvider.Unsubscribe(instrumentCode, TimeFrame.Minute);
+            if (OnStatusChange != null) OnStatusChange(this, new NewStatusEventArgs(StrategyStatus.Stopped));
         }
 
         private void BuildState()
         {
-            CurrentDate = DateOnly.FromDateTime(DateTime.Now.Date);
-            var startDate = CurrentDate.AddDays(-options.ExitPeriod).ToDateTime(TimeOnly.MinValue);
+            currentDate = DateOnly.FromDateTime(DateTime.Now.Date);
+            var startDate = currentDate.AddDays(-options.ExitPeriod).ToDateTime(TimeOnly.MinValue);
             var endDate = DateTime.Now;
-            var history = historyProvider.GetHistory(InstrumentCode, TimeFrame.Day, startDate, endDate);
+            var history = historyProvider.GetHistory(instrumentCode, TimeFrame.Day, startDate, endDate);
             if (history is null) throw new ArgumentNullException(nameof(history));
 
-            ExitMaxPrice = history
+            exitMaxPrice = history
                 .MaxBy(i => i.MaxPrice)
                 .MaxPrice;
 
-            ExitMinPrice = history
+            exitMinPrice = history
                 .MinBy(i => i.MinPrice)
                 .MinPrice;
         }
 
         private void Process(MarketData marketData)
         {
-            if (CurrentDate != DateOnly.FromDateTime(marketData.DateAndTime)) BuildState();
+            if (currentDate != DateOnly.FromDateTime(marketData.DateAndTime)) BuildState();
             ExitLogic(marketData);
         }
 
         private void ExitLogic(MarketData marketData)
         {
-            if (PositionDirection == PositionDirection.Short &&
-                marketData.MaxPrice > ExitMaxPrice) NewSignal(PositionDirection.Long);
-            else if (PositionDirection == PositionDirection.Long &&
-                marketData.MinPrice < ExitMinPrice) NewSignal(PositionDirection.Short);
+            if (entryOrder is null) throw new ArgumentNullException(nameof(entryOrder));
+
+            if (entryOrder.Direction == Direction.Short &&
+                marketData.MaxPrice > exitMaxPrice) NewSignal(Direction.Long, exitMaxPrice);
+            else if (entryOrder.Direction == Direction.Long &&
+                marketData.MinPrice < exitMinPrice) NewSignal(Direction.Short, exitMinPrice);
         }
 
-        private void NewSignal(PositionDirection direction)
+        private async void NewSignal(Direction direction, decimal price)
         {
-            var args = new ExitSignalEventArgs
-            {
-                Direction = direction
-            };
+            if (entryOrder is null) throw new ArgumentNullException(nameof(entryOrder));
+
+            LogInformation($"New exit signal, direction {direction}, price {price}");
+
+            var args = new ExitSignalEventArgs(direction, entryOrder.Volume, price);
 
             var newEvent = new Event
             {
                 EntityType = EntityType.TurtlesStrategy,
-                EntityId = StrategyId,
+                EntityId = strategyId,
                 EventType = JsonSerializer.Serialize(EventType.NewExitSignal),
                 EventData = JsonSerializer.Serialize(args),
             };
 
-            var task = eventRepository.AddAsync(newEvent);
-            task.Wait();
-            task = unitOfWork.CompleteAsync();
-            task.Wait();
+            await eventRepository.AddAsync(newEvent);
+            await unitOfWork.CompleteAsync();
             Stop();
             if (ExitSignal != null) ExitSignal(this, args);
         }
+        private void ExitSignalListener_OnStatusChange(object? sender, NewStatusEventArgs e)
+        {
+            LogInformation($"New status {e.Status}");
+        }
+
+        private void LogInformation(string message, params object[] args)
+        {
+            var logMessage = $"StrategyId {strategyId}, step {nameof(ExitSignalListener)}: ";
+            if (args.Any()) logger.LogInformation(logMessage + message, args);
+            else logger.LogInformation(logMessage + message, args);
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposed) return;
+
+            if (disposing)
+            {
+                // TODO: dispose managed state (managed objects (resources)).
+                Stop();
+                marketDataProvider.PriceChanged -= PriceChangedHandler;
+                OnStatusChange -= ExitSignalListener_OnStatusChange;
+            }
+
+            // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
+            // TODO: set large fields to null.
+
+            disposed = true;
+        }
+
+        ~ExitSignalListener() => Dispose(false);
     }
 }

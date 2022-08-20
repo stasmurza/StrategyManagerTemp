@@ -1,11 +1,17 @@
-﻿namespace StrategyManager.Core.Models.Services.Strategies.Turtles
+﻿using StrategyManager.Core.Models.DTOs.Strategies;
+using StrategyManager.Core.Models.Store;
+
+namespace StrategyManager.Core.Models.Services.Strategies.Turtles
 {
     public class OrderHandlerInput
     {
-        public string OrderId { get; set; } = string.Empty;
-        public string InstrumentCode { get; set; } = string.Empty;
-        public PositionDirection Direction { get; set; }
-        public decimal Volume { get; set; }
-        public decimal Price { get; set; }
+        public string StrategyId { get; set; } = String.Empty;
+        public OrderDTO Order { get; set; }
+
+        public OrderHandlerInput(string strategyId, OrderDTO order)
+        {
+            this.StrategyId = strategyId;
+            this.Order = order;
+        }
     }
 }

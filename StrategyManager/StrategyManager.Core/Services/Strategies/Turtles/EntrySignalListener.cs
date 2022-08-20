@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using StrategyManager.Core.Models.Options;
 using StrategyManager.Core.Models.Services;
 using StrategyManager.Core.Models.Services.MarketDataProvider;
@@ -13,10 +14,10 @@ using System.Text.Json;
 
 namespace StrategyManager.Core.Services.Strategies.Turtles
 {
-    public class EntrySignalListener : IEntrySignalListener, IIdempotentCommand
+    public class EntrySignalListener : IEntrySignalListener, IIdempotentStep, IDisposable
     {
-        public event EventHandler<EventArgs>? Started;
-        public event EventHandler<EventArgs>? Stopped;
+        public StrategyStatus Status { get; private set; }
+        public event EventHandler<NewStatusEventArgs>? OnStatusChange;
         public event EventHandler<EntrySignalEventArgs>? EntrySignal;
 
         private readonly IHistoryProvider historyProvider;
@@ -24,56 +25,64 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
         private IMarketDataProvider marketDataProvider;
         private IRepository<Event> eventRepository;
         private readonly IUnitOfWork unitOfWork;
+        private readonly ILogger<EntrySignalListener> logger;
         private string InstrumentCode { get; set; } = String.Empty;
         private string StrategyId { get; set; } = String.Empty;
         private DateOnly CurrentDate { get; set; }
         private decimal EntryMaxPrice { get; set; }
         private decimal EntryMinPrice { get; set; }
         private EventHandler<MarketDataEventArgs>? PriceChangedHandler;
+        private bool disposed;
 
         public EntrySignalListener(
             IHistoryProvider historyProvider,
             IOptions<TurtlesStrategyOptions> options,
             IRepository<Event> eventRepository,
             IMarketDataProvider marketDataProvider,
-            IUnitOfWork unitOfWork)
+            IUnitOfWork unitOfWork,
+            ILogger<EntrySignalListener> logger)
         {
             this.historyProvider = historyProvider;
             this.options = options.Value;
             this.eventRepository = eventRepository;
             this.marketDataProvider = marketDataProvider;
             this.unitOfWork = unitOfWork;
+            this.logger = logger;
             marketDataProvider.PriceChanged += PriceChangedHandler;
+            OnStatusChange += EntrySignalListener_OnStatusChange;
         }
 
         public void Run(EntrySignalInput input)
         {
+            if (OnStatusChange != null) OnStatusChange(this, new NewStatusEventArgs(StrategyStatus.Starting));
             InstrumentCode = input.InstrumentCode;
             StrategyId = input.StrategyId;
             BuildState();
             marketDataProvider.Subscribe(InstrumentCode, TimeFrame.Minute);
             if (PriceChangedHandler == null) PriceChangedHandler += MarketDataProvider_PriceChanged;
-            if (Started != null) Started(this, EventArgs.Empty);
+            if (OnStatusChange != null) OnStatusChange(this, new NewStatusEventArgs(StrategyStatus.Running));
         }
 
         private void MarketDataProvider_PriceChanged(object? sender, MarketDataEventArgs e)
         {
             Process(e.MarketData);
+            LogInformation("Price changed", e);
         }
 
         public void Stop()
         {
+            if (Status == StrategyStatus.Stopping && Status == StrategyStatus.Stopped) return;
+            if (OnStatusChange != null) OnStatusChange(this, new NewStatusEventArgs(StrategyStatus.Stopping));
             PriceChangedHandler = null;
             marketDataProvider.Unsubscribe(InstrumentCode, TimeFrame.Minute);
-            if (Stopped != null) Stopped(this, EventArgs.Empty);
+            if (OnStatusChange != null) OnStatusChange(this, new NewStatusEventArgs(StrategyStatus.Stopped));
         }
 
-        /// <inheritdoc/>
         private void BuildState()
         {
             CurrentDate = DateOnly.FromDateTime(DateTime.Now.Date);
             var startDate = CurrentDate.AddDays(-options.EntryPeriod).ToDateTime(TimeOnly.MinValue);
-            var endDate = DateTime.Now;
+            var endDate = DateTime.Now.AddDays(-1);
             var history = historyProvider.GetHistory(InstrumentCode, TimeFrame.Day, startDate, endDate);
             if (history is null) throw new ArgumentNullException(nameof(history));
 
@@ -94,16 +103,14 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
 
         private void EntryLogic(MarketData marketData)
         {
-            if (marketData.MaxPrice > EntryMaxPrice) NewSignal(PositionDirection.Long);
-            else if (marketData.MinPrice < EntryMinPrice) NewSignal(PositionDirection.Short);
+            if (marketData.MaxPrice > EntryMaxPrice) NewSignal(Direction.Long, EntryMaxPrice);
+            else if (marketData.MinPrice < EntryMinPrice) NewSignal(Direction.Short, EntryMinPrice);
         }
 
-        private void NewSignal(PositionDirection direction)
+        private async void NewSignal(Direction direction, decimal price)
         {
-            var args = new EntrySignalEventArgs
-            {
-                Direction = direction
-            };
+            LogInformation($"New entry signal, direction {direction}, price {price}");
+            var args = new EntrySignalEventArgs(direction, price);
             var newEvent = new Event
             {
                 EntityType = EntityType.TurtlesStrategy,
@@ -112,12 +119,48 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
                 EventData = JsonSerializer.Serialize(args),
             };
 
-            var task = eventRepository.AddAsync(newEvent);
-            task.Wait();
-            task = unitOfWork.CompleteAsync();
-            task.Wait();
+            await eventRepository.AddAsync(newEvent);
+            await unitOfWork.CompleteAsync();
             Stop();
             if (EntrySignal != null) EntrySignal(this, args);
         }
+
+        private void EntrySignalListener_OnStatusChange(object? sender, NewStatusEventArgs e)
+        {
+            LogInformation($"New status {e.Status}");
+        }
+
+        private void LogInformation(string message, params object[] args)
+        {
+            var logMessage = $"StrategyId {StrategyId}, step {nameof(EntrySignalListener)}: ";
+            if (args.Any()) logger.LogInformation(logMessage + message, args);
+            else logger.LogInformation(logMessage + message, args);
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposed) return;
+
+            if (disposing)
+            {
+                // TODO: dispose managed state (managed objects (resources)).
+                Stop();
+                marketDataProvider.PriceChanged -= PriceChangedHandler;
+                OnStatusChange -= EntrySignalListener_OnStatusChange;
+            }
+
+            // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
+            // TODO: set large fields to null.
+
+            disposed = true;
+        }
+
+        ~EntrySignalListener() => Dispose(false);
     }
 }

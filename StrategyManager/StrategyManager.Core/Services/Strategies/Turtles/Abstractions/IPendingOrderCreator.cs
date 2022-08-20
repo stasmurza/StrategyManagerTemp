@@ -3,7 +3,7 @@ using StrategyManager.Core.Services.Strategies.Abstractions;
 
 namespace StrategyManager.Core.Services.Strategies.Turtles.Abstractions
 {
-    public interface IPendingOrderCreator : IIdempotentCommand
+    public interface IPendingOrderCreator : IIdempotentStep
     {
         public Task CreatePendingOrderAsync(PendingOrderInput input);
 

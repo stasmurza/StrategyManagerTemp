@@ -2,10 +2,10 @@
 {
     public class Position
     {
-        public PositionDirection Direction { get; private set; }
+        public Direction Direction { get; private set; }
         public int Count { get; private  set; }
 
-        public Position(PositionDirection direction, int count)
+        public Position(Direction direction, int count)
         {
             Direction = direction;
             Count = count;

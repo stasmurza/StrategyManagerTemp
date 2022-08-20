@@ -3,7 +3,7 @@ using StrategyManager.Core.Services.Strategies.Abstractions;
 
 namespace StrategyManager.Core.Services.Strategies.Turtles.Abstractions
 {
-    public interface IExitSignalListener : IIdempotentCommand
+    public interface IExitSignalListener : IIdempotentStep
     {
         public void Run(ExitSignalInput input);
 

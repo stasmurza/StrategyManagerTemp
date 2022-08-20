@@ -3,7 +3,7 @@ using StrategyManager.Core.Services.Strategies.Abstractions;
 
 namespace StrategyManager.Core.Services.Strategies.Turtles.Abstractions
 {
-    public interface IOrderHandler : IIdempotentCommand
+    public interface IOrderHandler : IIdempotentStep
     {
         /// <summary>
         /// Idempotent order handler

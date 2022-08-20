@@ -1,10 +1,14 @@
-﻿namespace StrategyManager.Core.Models.Services.Strategies.Turtles
+﻿using StrategyManager.Core.Models.DTOs.Strategies;
+
+namespace StrategyManager.Core.Models.Services.Strategies.Turtles
 {
     public class OrderHandlerEventArgs
     {
-        public string OrderId { get; set; } = string.Empty;
-        public string InstrumentCode { get; set; } = string.Empty;
-        public PositionDirection Direction { get; set; }
-        public decimal Volume { get; set; }
+        public OrderDTO Order { get; private set; }
+
+        public OrderHandlerEventArgs(OrderDTO order)
+        {
+            Order = order;
+        }
     }
 }

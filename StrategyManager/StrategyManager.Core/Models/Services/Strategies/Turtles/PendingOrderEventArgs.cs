@@ -1,13 +1,16 @@
-﻿namespace StrategyManager.Core.Models.Services.Strategies.Turtles
+﻿using StrategyManager.Core.Models.DTOs.Strategies;
+
+namespace StrategyManager.Core.Models.Services.Strategies.Turtles
 {
     public class PendingOrderEventArgs
     {
-        public string StrategyId { get; set; } = String.Empty;
-        public string OrderId { get; set; } = string.Empty;
-        public string InstrumentCode { get; set; } = string.Empty;
-        public PositionDirection Direction { get; set; }
-        public decimal Volume { get; set; }
-        public decimal Price { get; set; }
-        public DateTime DateTime { get; set; }
+        public string StrategyId { get; set; }
+        public OrderDTO Order { get; set; }
+
+        public PendingOrderEventArgs(string strategyId, OrderDTO order)
+        {
+            StrategyId = strategyId;
+            Order = order;
+        }
     }
 }

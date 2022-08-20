@@ -1,6 +1,6 @@
 ﻿namespace StrategyManager.Core.Models.Services.Strategies
 {
-    public enum PositionDirection
+    public enum Direction
     {
         Long,
         Short,

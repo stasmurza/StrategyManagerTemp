@@ -1,4 +1,7 @@
-﻿using StrategyManager.Core.Models.Options;
+﻿using AutoMapper;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using StrategyManager.Core.Models.Options;
 using StrategyManager.Core.Models.Services.Strategies;
 using StrategyManager.Core.Models.Services.Strategies.Turtles;
 using StrategyManager.Core.Models.Store.Events;
@@ -12,26 +15,24 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
     public class TurtlesStrategy : ITurtlesStrategy
     {
         public StrategyStatus Status { get; private set; } = StrategyStatus.Stopped;
-
         public StrategyCode StrategyCode { get; private set; } = StrategyCode.Turtles;
-
         public string InstrumentCode { get; private set; } = string.Empty;
-
         public DateTime LastActive { get; private set; } = default;
-
         public StrategyStep StrategyStep { get; private set; }
 
-        private String StrategyId { get; set; } = string.Empty;
+        public event EventHandler<NewStatusEventArgs>? OnStatusChange;
 
+        private String StrategyId { get; set; } = string.Empty;
         private readonly InstrumentOptions instrumentOptions;
         private IRepository<Event> eventRepository;
-        private IEntrySignalListener EntrySignalListener { get; set; }
-        private IPendingOrderCreator EntryOrderCreator { get; set; }
-        private IOrderHandler EntryOrderHandler { get; set; }
-        private IExitSignalListener ExitSignalListener { get; set; }
-        private IPendingOrderCreator ExitOrderCreator { get; set; }
-        private IOrderHandler ExitOrderHandler { get; set; }
-
+        private IEntrySignalListener entrySignalListener;
+        private IPendingOrderCreator entryOrderCreator;
+        private IOrderHandler entryOrderHandler;
+        private IExitSignalListener exitSignalListener;
+        private IPendingOrderCreator exitOrderCreator;
+        private IOrderHandler exitOrderHandler;
+        private readonly IMapper mapper;
+        private readonly ILogger<TurtlesStrategy> logger;
         private bool disposed;
 
         public TurtlesStrategy(
@@ -41,57 +42,76 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
             IOrderHandler entryOrderHandler,
             IExitSignalListener exitSignalListener,
             IPendingOrderCreator exitOrderCreator,
-            IOrderHandler exitOrderHandler)
+            IOrderHandler exitOrderHandler,
+            IOptions<InstrumentOptions> instrumentOptions,
+            IMapper mapper,
+            ILogger<TurtlesStrategy> logger)
         {
             this.eventRepository = eventRepository;
-            EntrySignalListener = entrySignalListener;
-            EntryOrderCreator = entryOrderCreator;
-            EntryOrderHandler = entryOrderHandler;
-            ExitSignalListener = exitSignalListener;
-            ExitOrderCreator = exitOrderCreator;
-            ExitOrderHandler = exitOrderHandler;
+            this.entrySignalListener = entrySignalListener;
+            this.entryOrderCreator = entryOrderCreator;
+            this.entryOrderHandler = entryOrderHandler;
+            this.exitSignalListener = exitSignalListener;
+            this.exitOrderCreator = exitOrderCreator;
+            this.exitOrderHandler = exitOrderHandler;
+            this.instrumentOptions = instrumentOptions.Value;
+            this.mapper = mapper;
+            this.logger = logger;
 
-            EntrySignalListener.EntrySignal += EntrySignalListener_EntrySignal;
-            EntryOrderCreator.NewPendingOrder += EntryOrderCreator_NewPendingOrder;
-            EntryOrderHandler.OrderCancelled += EntryOrderHandler_OrderCancelled;
-            EntryOrderHandler.OrderRejected += EntryOrderHandler_OrderRejected;
-            EntryOrderHandler.OrderFilled += EntryOrderHandler_OrderFilled;
-            ExitSignalListener.ExitSignal += ExitSignalListener_ExitSignal;
-            ExitOrderCreator.NewPendingOrder += ExitOrderCreator_NewPendingOrder;
-            ExitOrderHandler.OrderCancelled += ExitOrderHandler_OrderCancelled;
-            ExitOrderHandler.OrderRejected += ExitOrderHandler_OrderRejected;
-            ExitOrderHandler.OrderFilled += ExitOrderHandler_OrderFilled;
+            this.entrySignalListener.EntrySignal += EntrySignalListener_EntrySignal;
+            this.entryOrderCreator.NewPendingOrder += EntryOrderCreator_NewPendingOrder;
+            this.entryOrderHandler.OrderCancelled += EntryOrderHandler_OrderCancelled;
+            this.entryOrderHandler.OrderRejected += EntryOrderHandler_OrderRejected;
+            this.entryOrderHandler.OrderFilled += EntryOrderHandler_OrderFilled;
+            this.exitSignalListener.ExitSignal += ExitSignalListener_ExitSignal;
+            this.exitOrderCreator.NewPendingOrder += ExitOrderCreator_NewPendingOrder;
+            this.exitOrderHandler.OrderCancelled += ExitOrderHandler_OrderCancelled;
+            this.exitOrderHandler.OrderRejected += ExitOrderHandler_OrderRejected;
+            this.exitOrderHandler.OrderFilled += ExitOrderHandler_OrderFilled;
+            OnStatusChange += TurtlesStrategy_OnStatusChange; ;
         }
 
         public async Task StartAsync(string instrumentCode, CancellationTokenSource cancellationTokenSource)
         {
+            if (OnStatusChange != null) OnStatusChange(this, new NewStatusEventArgs(StrategyStatus.Starting));
             InstrumentCode = instrumentCode;
-            StrategyId = StrategyCode.ToString() + instrumentCode;
+            StrategyId = String.Format(IStrategy.StartegyIdPattern, StrategyCode, instrumentCode);
             await RunAsync();
+            if (OnStatusChange != null) OnStatusChange(this, new NewStatusEventArgs(StrategyStatus.Running));
         }
 
         public async Task StopAsync()
         {
+            if (Status == StrategyStatus.Stopping && Status == StrategyStatus.Stopped) return;
+            if (OnStatusChange != null) OnStatusChange(this, new NewStatusEventArgs(StrategyStatus.Stopping));
+
             Status = StrategyStatus.Stopping;
-            IIdempotentCommand result = StrategyStep switch
-            {
-                StrategyStep.ListeningEntrySignal => EntrySignalListener,
-                StrategyStep.CreatingEntryPendingOrder => EntryOrderCreator,
-                StrategyStep.HandlingEntryOrder => EntryOrderHandler,
-                StrategyStep.ListeningExitSignal => ExitSignalListener,
-                StrategyStep.CreatingExitPendingOrder => ExitOrderCreator,
-                StrategyStep.HandlingExitOrder => ExitOrderHandler,
-                _ => throw new ArgumentOutOfRangeException(nameof(StrategyStep), $"Not expected state value: {StrategyStep}"),
-            };
+            IIdempotentStep result = GetCurrentCommand();
             result.Stop();
             Status = StrategyStatus.Stopped;
+
+            if (OnStatusChange != null) OnStatusChange(this, new NewStatusEventArgs(StrategyStatus.Stopped));
+        }
+
+        private IIdempotentStep GetCurrentCommand()
+        {
+            return StrategyStep switch
+            {
+                StrategyStep.ListeningEntrySignal => entrySignalListener,
+                StrategyStep.CreatingEntryPendingOrder => entryOrderCreator,
+                StrategyStep.HandlingEntryOrder => entryOrderHandler,
+                StrategyStep.ListeningExitSignal => exitSignalListener,
+                StrategyStep.CreatingExitPendingOrder => exitOrderCreator,
+                StrategyStep.HandlingExitOrder => exitOrderHandler,
+                _ => throw new ArgumentOutOfRangeException(nameof(StrategyStep), $"Not expected state value: {StrategyStep}"),
+            };
         }
 
         private async Task RunAsync()
         {
             var lastEvent = await eventRepository.FirstOrDefaultAsync(
-                i => i.Id == StrategyId,
-                false,
+                i => i.Id,
+                true,
                 i => i.EntityId == StrategyId);
 
             if (lastEvent is null)
@@ -100,49 +120,49 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
                 return;
             }
 
-            var eventType = JsonSerializer.Deserialize<EventType>(lastEvent.EventData);
+            var eventType = JsonSerializer.Deserialize<EventType>(lastEvent.EventType);
             switch (eventType)
             {
                 case EventType.NewEntrySignal:
                     {
                         var args = JsonSerializer.Deserialize<EntrySignalEventArgs>(lastEvent.EventData);
                         if (args == null) throw new ArgumentNullException($"{nameof(args)} is null");
-                        EntrySignalListener_EntrySignal(EntrySignalListener, args);
+                        EntrySignalListener_EntrySignal(entrySignalListener, args);
                         break;
                     }
                 case EventType.NewEntryPendingOrder:
                     {
                         var args = JsonSerializer.Deserialize<PendingOrderEventArgs>(lastEvent.EventData);
                         if (args == null) throw new ArgumentNullException($"{nameof(args)} is null");
-                        EntryOrderCreator_NewPendingOrder(EntrySignalListener, args);
+                        EntryOrderCreator_NewPendingOrder(entrySignalListener, args);
                         break;
                     }
                 case EventType.EntryOrderFilled:
                     {
                         var args = JsonSerializer.Deserialize<OrderHandlerEventArgs>(lastEvent.EventData);
                         if (args == null) throw new ArgumentNullException($"{nameof(args)} is null");
-                        EntryOrderHandler_OrderFilled(EntrySignalListener, args);
+                        EntryOrderHandler_OrderFilled(entrySignalListener, args);
                         break;
                     }
                 case EventType.NewExitSignal:
                     {
                         var args = JsonSerializer.Deserialize<ExitSignalEventArgs>(lastEvent.EventData);
                         if (args == null) throw new ArgumentNullException($"{nameof(args)} is null");
-                        ExitSignalListener_ExitSignal(EntrySignalListener, args);
+                        ExitSignalListener_ExitSignal(entrySignalListener, args);
                         break;
                     }
                 case EventType.NewExitPendingOrder:
                     {
                         var args = JsonSerializer.Deserialize<PendingOrderEventArgs>(lastEvent.EventData);
                         if (args == null) throw new ArgumentNullException($"{nameof(args)} is null");
-                        ExitOrderCreator_NewPendingOrder(EntrySignalListener, args);
+                        ExitOrderCreator_NewPendingOrder(entrySignalListener, args);
                         break;
                     }
                 case EventType.ExitOrderFilled:
                     {
                         var args = JsonSerializer.Deserialize<OrderHandlerEventArgs>(lastEvent.EventData);
                         if (args == null) throw new ArgumentNullException($"{nameof(args)} is null");
-                        ExitOrderHandler_OrderFilled(EntrySignalListener, args);
+                        ExitOrderHandler_OrderFilled(entrySignalListener, args);
                         break;
                     }
                 default:
@@ -154,149 +174,123 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
         {
             var input = new EntrySignalInput
             {
-                InstrumentCode = InstrumentCode,
-            };
-            EntrySignalListener.Run(input);
-        }
-
-        private void EntrySignalListener_EntrySignal(object? sender, EntrySignalEventArgs e)
-        {
-            if (Status == StrategyStatus.Stopping) return;
-            if (Status != StrategyStatus.Running)
-            {
-                var message = $"Event an not be processed. Strategy {StrategyId} is in status {Status}";
-                throw new InvalidOperationException(message);
-            }
-
-            StrategyStep = StrategyStep.CreatingEntryPendingOrder;
-            var input = new PendingOrderInput
-            {
                 StrategyId = StrategyId,
                 InstrumentCode = InstrumentCode,
-                Direction = e.Direction,
-                Volume = instrumentOptions.Volume,
             };
-            var task = EntryOrderCreator.CreatePendingOrderAsync(input);
-            task.Wait();
+            entrySignalListener.Run(input);
+        }
+
+        private async void EntrySignalListener_EntrySignal(object? sender, EntrySignalEventArgs e)
+        {
+            OnEventHandler();
+            StrategyStep = StrategyStep.CreatingEntryPendingOrder;
+            var input = new PendingOrderInput(
+                StrategyId,
+                InstrumentCode,
+                e.Direction,
+                instrumentOptions.Volume,
+                e.Price);
+            await entryOrderCreator.CreatePendingOrderAsync(input);
         }
 
         private void EntryOrderCreator_NewPendingOrder(object? sender, PendingOrderEventArgs e)
         {
-            if (Status == StrategyStatus.Stopping) return;
-            if (Status != StrategyStatus.Running)
-            {
-                var message = $"Event can not be processed. Strategy {StrategyId} is in status {Status}";
-                throw new InvalidOperationException(message);
-            }
-
+            OnEventHandler();
             StrategyStep = StrategyStep.HandlingEntryOrder;
-            var input = new OrderHandlerInput
-            {
-                OrderId = e.OrderId,
-                InstrumentCode = InstrumentCode,
-                Direction = e.Direction,
-                Volume = instrumentOptions.Volume,
-            };
-            EntryOrderHandler.HandleOrder(input);
+            var input = new OrderHandlerInput(e.StrategyId, e.Order);
+            entryOrderHandler.HandleOrder(input);
         }
 
         private void EntryOrderHandler_OrderFilled(object? sender, OrderHandlerEventArgs e)
         {
-            if (Status == StrategyStatus.Stopping) return;
-            if (Status != StrategyStatus.Running)
-            {
-                var message = $"Event can not be processed. Strategy {StrategyId} is in status {Status}";
-                throw new InvalidOperationException(message);
-            }
-
+            OnEventHandler();
             StrategyStep = StrategyStep.ListeningExitSignal;
-            var input = new ExitSignalInput
-            {
-                InstrumentCode = InstrumentCode,
-                Direction = e.Direction,
-            };
-            ExitSignalListener.Run(input);
+            var input = new ExitSignalInput(StrategyId, InstrumentCode, e.Order);
+            exitSignalListener.Run(input);
         }
 
         private void EntryOrderHandler_OrderRejected(object? sender, OrderHandlerEventArgs e)
         {
-            var message = $"Unsuccessful attemp to register order {e.OrderId}. Order rejected.";
+            OnEventHandler();
+            var message = $"Unsuccessful attempt to register order {e.Order.Id}. Order rejected.";
+
             throw new InvalidOperationException(message);
         }
 
         private void EntryOrderHandler_OrderCancelled(object? sender, OrderHandlerEventArgs e)
         {
-            var message = $"Unsuccessful attemp to register order {e.OrderId}. Order cancelled.";
+            OnEventHandler();
+            var message = $"Unsuccessful attempt to register order {e.Order.Id}. Order cancelled.";
             throw new InvalidOperationException(message);
         }
 
         private void ExitSignalListener_ExitSignal(object? sender, ExitSignalEventArgs e)
         {
-            if (Status == StrategyStatus.Stopping) return;
-            if (Status != StrategyStatus.Running)
-            {
-                var message = $"Event can not be processed. Strategy {StrategyId} is in status {Status}";
-                throw new InvalidOperationException(message);
-            }
-
+            OnEventHandler();
             StrategyStep = StrategyStep.CreatingExitPendingOrder;
-            var input = new PendingOrderInput
-            {
-                InstrumentCode = InstrumentCode,
-                Direction = e.Direction,
-                Volume = instrumentOptions.Volume,
-            };
-            var task = ExitOrderCreator.CreatePendingOrderAsync(input);
+            var input = new PendingOrderInput(
+                StrategyId,
+                InstrumentCode,
+                e.Direction,
+                e.Volume,
+                e.Price);
+            var task = exitOrderCreator.CreatePendingOrderAsync(input);
             task.Wait();
         }
 
         private void ExitOrderCreator_NewPendingOrder(object? sender, PendingOrderEventArgs e)
         {
-            if (Status == StrategyStatus.Stopping) return;
-            if (Status != StrategyStatus.Running)
-            {
-                var message = $"Event can not be processed. Strategy {StrategyId} is in status {Status}";
-                throw new InvalidOperationException(message);
-            }
-
+            OnEventHandler();
             StrategyStep = StrategyStep.HandlingExitOrder;
-            var input = new OrderHandlerInput
-            {
-                OrderId = e.OrderId,
-                InstrumentCode = InstrumentCode,
-                Direction = e.Direction,
-                Volume = instrumentOptions.Volume,
-            };
-            ExitOrderHandler.HandleOrder(input);
+            var input = new OrderHandlerInput(StrategyId, e.Order);
+            exitOrderHandler.HandleOrder(input);
         }
 
         private void ExitOrderHandler_OrderFilled(object? sender, OrderHandlerEventArgs e)
         {
-            if (Status == StrategyStatus.Stopping) return;
-            if (Status != StrategyStatus.Running)
-            {
-                var message = $"Event can not be processed. Strategy {StrategyId} is in status {Status}";
-                throw new InvalidOperationException(message);
-            }
-
+            OnEventHandler();
             StrategyStep = StrategyStep.ListeningEntrySignal;
             var input = new EntrySignalInput
             {
                 InstrumentCode = InstrumentCode,
             };
-            EntrySignalListener.Run(input);
+            entrySignalListener.Run(input);
         }
 
         private void ExitOrderHandler_OrderRejected(object? sender, OrderHandlerEventArgs e)
         {
-            var message = $"Unsuccessful attemp to register order {e.OrderId}. Order rejected.";
+            OnEventHandler();
+            var message = $"Unsuccessful attemp to register order {e.Order.Id}. Order rejected.";
             throw new InvalidOperationException(message);
         }
 
         private void ExitOrderHandler_OrderCancelled(object? sender, OrderHandlerEventArgs e)
         {
-            var message = $"Unsuccessful attemp to register order {e.OrderId}. Order cancelled.";
+            OnEventHandler();
+            var message = $"Unsuccessful attemp to register order {e.Order.Id}. Order cancelled.";
             throw new InvalidOperationException(message);
+        }
+
+        private void OnEventHandler()
+        {
+            if (Status == StrategyStatus.Stopping) return;
+            if (Status != StrategyStatus.Running)
+            {
+                var message = $"Event can not be processed. Strategy {StrategyId} is in status {Status}";
+                throw new InvalidOperationException(message);
+            }
+        }
+
+        private void TurtlesStrategy_OnStatusChange(object? sender, NewStatusEventArgs e)
+        {
+            LogInformation($"New status {e.Status}");
+        }
+
+        private void LogInformation(string message, params object[] args)
+        {
+            var logMessage = $"StrategyId {StrategyId}: ";
+            if (args.Any()) logger.LogInformation(logMessage + message, args);
+            else logger.LogInformation(logMessage + message, args);
         }
 
         public void Dispose()
@@ -312,16 +306,18 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
             if (disposing)
             {
                 // TODO: dispose managed state (managed objects (resources)).
-                EntrySignalListener.EntrySignal -= EntrySignalListener_EntrySignal;
-                EntryOrderCreator.NewPendingOrder -= EntryOrderCreator_NewPendingOrder;
-                EntryOrderHandler.OrderCancelled -= EntryOrderHandler_OrderCancelled;
-                EntryOrderHandler.OrderRejected -= EntryOrderHandler_OrderRejected;
-                EntryOrderHandler.OrderFilled -= EntryOrderHandler_OrderFilled;
-                ExitSignalListener.ExitSignal -= ExitSignalListener_ExitSignal;
-                ExitOrderCreator.NewPendingOrder -= ExitOrderCreator_NewPendingOrder;
-                ExitOrderHandler.OrderCancelled -= ExitOrderHandler_OrderCancelled;
-                ExitOrderHandler.OrderRejected -= ExitOrderHandler_OrderRejected;
-                ExitOrderHandler.OrderFilled -= ExitOrderHandler_OrderFilled;
+                entrySignalListener.EntrySignal -= EntrySignalListener_EntrySignal;
+                entryOrderCreator.NewPendingOrder -= EntryOrderCreator_NewPendingOrder;
+                entryOrderHandler.OrderCancelled -= EntryOrderHandler_OrderCancelled;
+                entryOrderHandler.OrderRejected -= EntryOrderHandler_OrderRejected;
+                entryOrderHandler.OrderFilled -= EntryOrderHandler_OrderFilled;
+                exitSignalListener.ExitSignal -= ExitSignalListener_ExitSignal;
+                exitOrderCreator.NewPendingOrder -= ExitOrderCreator_NewPendingOrder;
+                exitOrderHandler.OrderCancelled -= ExitOrderHandler_OrderCancelled;
+                exitOrderHandler.OrderRejected -= ExitOrderHandler_OrderRejected;
+                exitOrderHandler.OrderFilled -= ExitOrderHandler_OrderFilled;
+
+                OnStatusChange -= TurtlesStrategy_OnStatusChange;
             }
 
             // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.

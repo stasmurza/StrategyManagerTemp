@@ -2,6 +2,13 @@
 {
     public class EntrySignalEventArgs : EventArgs
     {
-        public PositionDirection Direction { get; set; }
+        public Direction Direction { get; set; }
+        public decimal Price { get; set; }
+
+        public EntrySignalEventArgs(Direction direction, decimal price)
+        {
+            Direction = direction;
+            Price = price;
+        }
     }
 }
