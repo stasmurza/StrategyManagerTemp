@@ -2,11 +2,11 @@
 {
     public class PendingOrderInput
     {
-        public string StrategyId { get; set; }
-        public string InstrumentCode { get; set; }
-        public Direction Direction { get; set; }
-        public decimal Volume { get; set; }
-        public decimal Price { get; set; }
+        public string StrategyId { get; private set; }
+        public string InstrumentCode { get; private set; }
+        public Direction Direction { get; private set; }
+        public decimal Volume { get; private set; }
+        public decimal Price { get; private set; }
 
         public PendingOrderInput(
             string strategyId,

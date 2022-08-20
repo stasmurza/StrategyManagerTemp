@@ -12,5 +12,12 @@ namespace StrategyManager.Core.Services.Strategies.Abstractions
         Task StartAsync(string ticketCode, CancellationTokenSource cancellationTokenSource);
         Task StopAsync();
         event EventHandler<NewStatusEventArgs>? OnStatusChange;
+        public String StrategyId
+        {
+            get
+            {
+                return $"{StrategyCode}|{InstrumentCode}";
+            }
+        }
     }
 }

@@ -10,7 +10,7 @@ using System.Text.Json;
 
 namespace StrategyManager.Core.Services.Strategies.Turtles
 {
-    public class PendingOrderCreator : IPendingOrderCreator
+    public class ExitOrderCreator : IExitOrderCreator
     {
         public StrategyStatus Status { get; private set; }
         public event EventHandler<PendingOrderEventArgs>? NewPendingOrder;
@@ -20,22 +20,22 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
         private IRepository<Order> orderRepository;
         private readonly IUnitOfWork unitOfWork;
         private readonly IMapper mapper;
-        private readonly ILogger<PendingOrderCreator> logger;
+        private readonly ILogger<ExitOrderCreator> logger;
         private string StrategyId { get; set; } = String.Empty;
 
-        public PendingOrderCreator(
+        public ExitOrderCreator(
             IRepository<Event> eventRepository,
             IRepository<Order> orderRepository,
             IUnitOfWork unitOfWork,
             IMapper mapper,
-            ILogger<PendingOrderCreator> logger)
+            ILogger<ExitOrderCreator> logger)
         {
             this.eventRepository = eventRepository;
             this.orderRepository = orderRepository;
             this.unitOfWork = unitOfWork;
             this.mapper = mapper;
             this.logger = logger;
-            OnStatusChange += PendingOrderCreator_OnStatusChange;
+            OnStatusChange += ExitOrderCreator_OnStatusChange;
         }
 
         public async Task CreatePendingOrderAsync(PendingOrderInput input)
@@ -56,7 +56,7 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
             {
                 EntityType = EntityType.TurtlesStrategy,
                 EntityId = input.StrategyId,
-                EventType = JsonSerializer.Serialize(EventType.NewEntrySignal),
+                EventType = JsonSerializer.Serialize(EventType.NewExitPendingOrder),
                 EventData = JsonSerializer.Serialize(args),
             };
             await eventRepository.AddAsync(newEvent);
@@ -78,14 +78,14 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
             }
         }
 
-        private void PendingOrderCreator_OnStatusChange(object? sender, NewStatusEventArgs e)
+        private void ExitOrderCreator_OnStatusChange(object? sender, NewStatusEventArgs e)
         {
             LogInformation($"New status {e.Status}");
         }
 
         private void LogInformation(string message, params object[] args)
         {
-            var logMessage = $"StrategyId {StrategyId}, step {nameof(PendingOrderCreator)}: ";
+            var logMessage = $"StrategyId {StrategyId}, step {nameof(ExitOrderCreator)}: ";
             if (args.Any()) logger.LogInformation(logMessage + message, args);
             else logger.LogInformation(logMessage + message, args);
         }

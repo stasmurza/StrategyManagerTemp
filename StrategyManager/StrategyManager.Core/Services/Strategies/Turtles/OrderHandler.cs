@@ -91,7 +91,7 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
             };
 
             var order = mapper.Map<Order>(input.Order);
-            order.OrderType = OrderType.Limit;
+            order.OrderType = TradingAPI.Contracts.Services.OrderManager.Orders.OrderType.Limit;
             order.Instrument = instrument;
 
             orderManager.RegisterOrder(order);

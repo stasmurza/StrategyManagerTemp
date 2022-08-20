@@ -19,10 +19,9 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
         public string InstrumentCode { get; private set; } = string.Empty;
         public DateTime LastActive { get; private set; } = default;
         public StrategyStep StrategyStep { get; private set; }
-
+        public String StrategyId { get => (this as IStrategy).StrategyId; }
         public event EventHandler<NewStatusEventArgs>? OnStatusChange;
 
-        private String StrategyId { get; set; } = string.Empty;
         private readonly InstrumentOptions instrumentOptions;
         private IRepository<Event> eventRepository;
         private IEntrySignalListener entrySignalListener;
@@ -38,10 +37,10 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
         public TurtlesStrategy(
             IRepository<Event> eventRepository,
             IEntrySignalListener entrySignalListener,
-            IPendingOrderCreator entryOrderCreator,
+            IEntryOrderCreator entryOrderCreator,
             IOrderHandler entryOrderHandler,
             IExitSignalListener exitSignalListener,
-            IPendingOrderCreator exitOrderCreator,
+            IExitOrderCreator exitOrderCreator,
             IOrderHandler exitOrderHandler,
             IOptions<InstrumentOptions> instrumentOptions,
             IMapper mapper,
@@ -68,14 +67,13 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
             this.exitOrderHandler.OrderCancelled += ExitOrderHandler_OrderCancelled;
             this.exitOrderHandler.OrderRejected += ExitOrderHandler_OrderRejected;
             this.exitOrderHandler.OrderFilled += ExitOrderHandler_OrderFilled;
-            OnStatusChange += TurtlesStrategy_OnStatusChange; ;
+            OnStatusChange += TurtlesStrategy_OnStatusChange;
         }
 
         public async Task StartAsync(string instrumentCode, CancellationTokenSource cancellationTokenSource)
         {
             if (OnStatusChange != null) OnStatusChange(this, new NewStatusEventArgs(StrategyStatus.Starting));
             InstrumentCode = instrumentCode;
-            StrategyId = String.Format(IStrategy.StartegyIdPattern, StrategyCode, instrumentCode);
             await RunAsync();
             if (OnStatusChange != null) OnStatusChange(this, new NewStatusEventArgs(StrategyStatus.Running));
         }
@@ -316,7 +314,6 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
                 exitOrderHandler.OrderCancelled -= ExitOrderHandler_OrderCancelled;
                 exitOrderHandler.OrderRejected -= ExitOrderHandler_OrderRejected;
                 exitOrderHandler.OrderFilled -= ExitOrderHandler_OrderFilled;
-
                 OnStatusChange -= TurtlesStrategy_OnStatusChange;
             }
 
