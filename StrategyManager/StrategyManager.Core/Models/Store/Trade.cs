@@ -5,6 +5,6 @@
         public string Code { get; set; } = String.Empty;
         public string Name { get; set; } = String.Empty;
         public Order? Order { get; set; }
-        public int OrderId { get; set; }
+        public string OrderId { get; set; }
     }
 }

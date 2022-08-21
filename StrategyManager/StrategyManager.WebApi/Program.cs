@@ -18,8 +18,12 @@ builder.Logging.AddConsole();
 ConfigurationManager config = builder.Configuration;
 config.AddEnvironmentVariables();
 
+//builder.Services.AddDbContext<StrategyManagerDbContext>(
+//    options => options.UseNpgsql(config.GetValue<string>(EnvVariableNameConstants.StrategyManagerDbConnection)));
 builder.Services.AddDbContext<StrategyManagerDbContext>(
-    options => options.UseNpgsql(config.GetValue<string>(EnvVariableNameConstants.StrategyManagerDbConnection)));
+    options => options.UseNpgsql("Server=host.docker.internal;Port=5432;Database=Strategy_manager;User Id=postgres;Password=postgres;"));
+
+
 
 builder.Services.AddRepositories();
 builder.Services.AddAuthentication(config);

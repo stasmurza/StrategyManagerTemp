@@ -1,5 +1,4 @@
 ﻿using StrategyManager.Core.Models.Store;
-using MongoDB.Driver;
 using System.Linq.Expressions;
 
 namespace StrategyManager.Core.Repositories.Abstractions

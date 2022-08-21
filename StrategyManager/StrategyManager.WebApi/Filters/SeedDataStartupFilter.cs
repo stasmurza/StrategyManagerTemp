@@ -1,6 +1,5 @@
 ﻿using StrategyManager.Core.Repositories.Abstractions;
 using StrategyManager.Data;
-using MongoDB.Driver;
 using StrategyManager.Core.Models.Services.Strategies;
 
 namespace StrategyManager.WebAPI.Filters

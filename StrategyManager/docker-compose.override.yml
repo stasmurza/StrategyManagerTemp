@@ -5,8 +5,7 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=https://+:443;http://+:80
-      - STRATEGY_MANAGER_CONNECTION_STRING=mongodb://host.docker.internal:27017
-      - STRATEGY_MANAGER_DATABASE_NAME=Strategy_manager_event_store
+      - STRATEGY_MANAGER_CONNECTION_STRING=Server=host.docker.internal;Port=5432;Database=Strategy_manager;User Id=postgres;Password=postgres;
       - JWT_SECRET=d14c7bc2-c7bc-447f-b8bc-aa1fd353042f
       - JWT_EXPIRATION_TIME_MINUTES=2000
       - SMTP_HOST=enter_host

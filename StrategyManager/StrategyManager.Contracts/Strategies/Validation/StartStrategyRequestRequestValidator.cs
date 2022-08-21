@@ -1,5 +1,4 @@
 ﻿using FluentValidation;
-using MongoDB.Bson;
 
 namespace StrategyManager.Contracts.Strategies.Validation
 {
