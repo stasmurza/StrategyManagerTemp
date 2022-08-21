@@ -58,7 +58,7 @@ namespace StrategyManager.WebApi.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(ErrorResponse))]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
-        public async Task<IActionResult> AddTicketAsync([FromRoute] string strategyId, AddTicketRequest request)
+        public async Task<IActionResult> AddTicketAsync([FromRoute] int strategyId, AddTicketRequest request)
         {
             var input = mapper.Map<AddTicketInput>(request);
             input.StrategyId = strategyId;
@@ -78,7 +78,7 @@ namespace StrategyManager.WebApi.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(ErrorResponse))]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
-        public async Task<IActionResult> RemoveTicketAsync([FromRoute] string strategyId, RemoveTicketRequest request)
+        public async Task<IActionResult> RemoveTicketAsync([FromRoute] int strategyId, RemoveTicketRequest request)
         {
             var input = mapper.Map<RemoveTicketInput>(request);
             input.StrategyId = strategyId;
@@ -97,7 +97,7 @@ namespace StrategyManager.WebApi.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(ErrorResponse))]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
-        public async Task<IActionResult> RunStrategyAsync(string strategyId)
+        public async Task<IActionResult> RunStrategyAsync(int strategyId)
         {
             var input = new RunStrategyInput
             {
@@ -119,7 +119,7 @@ namespace StrategyManager.WebApi.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(ErrorResponse))]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
-        public async Task<IActionResult> StopStrategyAsync(string strategyId)
+        public async Task<IActionResult> StopStrategyAsync(int strategyId)
         {
             var input = new StopStrategyInput
             {

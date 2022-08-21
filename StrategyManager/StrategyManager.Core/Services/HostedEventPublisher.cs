@@ -3,22 +3,23 @@ using StrategyManager.Core.Repositories.Abstractions;
 using StrategyManager.Core.Services.Abstractions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace StrategyManager.Core.Services
 {
     public class HostedEventPublisher : BackgroundService
     {
-        private readonly IRepository<Event> repository;
+        private readonly IMessagePublisher messagePublisher;
+        private readonly IServiceProvider serviceProvider;
         private readonly ILogger logger;
         private CancellationTokenSource cancellationTokenSource = new();
-        private readonly IMessagePublisher messagePublisher;
 
         public HostedEventPublisher(
-            IRepository<Event> repository,
             IMessagePublisher messagePublisher,
+            IServiceProvider serviceProvider,
             ILogger<HostedEventPublisher> logger)
         {
-            this.repository = repository;
+            this.serviceProvider = serviceProvider;
             this.messagePublisher = messagePublisher;
             this.logger = logger;
         }
@@ -54,15 +55,22 @@ namespace StrategyManager.Core.Services
         private async Task ProcessEvents(CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested) return;
-            var newEvents = await repository.GetAsync(i => i.Published == false);
-            
-            //publish events to message queue
-            foreach(var domainEvent in newEvents)
+
+            using (var scope = serviceProvider.CreateScope())
             {
-                if (cancellationToken.IsCancellationRequested) return;
-                messagePublisher.Publish(domainEvent);
-                domainEvent.Published = true;
-                await repository.UpdateAsync(domainEvent);
+                var repository = scope.ServiceProvider.GetService<IRepository<Event>>();
+                var message = $"Unsuccessful attempt to activate a service {nameof(IRepository<Event>)}";
+                if (repository is null) throw new InvalidOperationException(message);
+                var newEvents = await repository.GetAsync(i => i.Published == false);
+
+                //publish events to message queue
+                foreach (var domainEvent in newEvents)
+                {
+                    if (cancellationToken.IsCancellationRequested) return;
+                    messagePublisher.Publish(domainEvent);
+                    domainEvent.Published = true;
+                    repository.Update(domainEvent);
+                }
             }
             
             await Task.Delay(1000);

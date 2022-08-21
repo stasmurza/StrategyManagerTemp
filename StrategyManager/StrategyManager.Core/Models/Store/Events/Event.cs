@@ -6,5 +6,6 @@
         public string EntityId { get; set; } = String.Empty;
         public string EventType { get; set; } = String.Empty;
         public string EventData { get; set; } = String.Empty;
+        public bool Published { get; set; }
     }
 }

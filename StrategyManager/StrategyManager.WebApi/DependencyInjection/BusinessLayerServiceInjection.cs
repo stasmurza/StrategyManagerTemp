@@ -4,6 +4,7 @@ using StrategyManager.Core.Services.Abstractions;
 using StrategyManager.Core.Services.Strategies.Abstractions;
 using StrategyManager.Core.Services.Strategies.Turtles;
 using StrategyManager.Core.Services.Strategies.Turtles.Abstractions;
+using TradingAPI.API.Services;
 
 namespace StrategyManager.WebAPI.DependencyInjection
 {
@@ -19,10 +20,21 @@ namespace StrategyManager.WebAPI.DependencyInjection
         /// <returns></returns>
         public static IServiceCollection AddBusinessLayerServices(this IServiceCollection services)
         {
+            services.AddTransient<IMarketDataProvider, MarketDataProvider>();
             services.AddTransient<IHistoryProvider, HistoryProvider>();
+            services.AddTransient<IOrderManager, OrderManager>();
+
+            //Turtles
+            services.AddTransient<IEntrySignalListener, EntrySignalListener>();
+            services.AddTransient<IEntryOrderCreator, EntryOrderCreator>();
+            services.AddTransient<IOrderHandler, OrderHandler>();
+            services.AddTransient<IExitSignalListener, ExitSignalListener>();
+            services.AddTransient<IExitOrderCreator, ExitOrderCreator>();
+            services.AddTransient<IOrderHandler, OrderHandler>();
             services.AddTransient<ITurtlesStrategy, TurtlesStrategy>();
+
             services.AddSingleton<IStrategyFactory, StrategyFactory>();
-            services.AddSingleton<IStrategyManager, StrategyManager.Core.Services.StrategyManager>();
+            services.AddSingleton<IStrategyManager, Core.Services.StrategyManager>();
             services.AddHostedService<HostedEventPublisher>();
 
             //For starting services on startup
@@ -30,7 +42,7 @@ namespace StrategyManager.WebAPI.DependencyInjection
             services.AddTransient<IEmailSender, EmailSender>();
             services.AddTransient<IJwtTokenService, JwtTokenService>();
 
-            services.AddMediatR(typeof(StrategyManager.Core.Handlers.Strategies.RunStrategyHandler));
+            services.AddMediatR(typeof(Core.Handlers.Strategies.RunStrategyHandler));
 
             return services;
         }

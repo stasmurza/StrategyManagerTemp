@@ -28,7 +28,7 @@ namespace StrategyManager.Core.Handlers.Strategies
                 strategy => strategy.Tickets,
             };
 
-            var strategies = await repository.GetAllAsync(includes: include);
+            var strategies = await repository.GetAsync(includes: include);
 
             return new GetStrategiesOutput
             {

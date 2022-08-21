@@ -30,13 +30,13 @@ namespace StrategyManager.Infrastructure.Proxies.Clients
                 Password = this.options.Password,
             };
 
-            connection = factory.CreateConnection();
-            channel = connection.CreateModel();
-            channel.QueueDeclare(
-                queue: this.options.QueueName,
-                durable: true,
-                exclusive: false,
-                autoDelete: false);
+            //connection = factory.CreateConnection();
+            //channel = connection.CreateModel();
+            //channel.QueueDeclare(
+            //    queue: this.options.QueueName,
+            //    durable: true,
+            //    exclusive: false,
+            //    autoDelete: false);
         }
 
         public void Publish(Event domainEvent)

@@ -28,30 +28,36 @@ namespace StrategyManager.WebAPI.Filters
         {
             using (var scope = serviceProvider.CreateScope())
             {
-                var dbContext = scope.ServiceProvider.GetService<IEventStoreDbContext>();
-                var message = $"Unsuccessful attempt to activate a service {nameof(IEventStoreDbContext)}";
+                var dbContext = scope.ServiceProvider.GetService<StrategyManagerDbContext>();
+                var message = $"Unsuccessful attempt to activate a service {nameof(StrategyManagerDbContext)}";
                 if (dbContext is null) throw new InvalidOperationException(message);
 
                 var strategyRepoitory = scope.ServiceProvider.GetService<IRepository<Core.Models.Store.Strategy>>();
                 message = $"Unsuccessful attempt to activate a service {nameof(IRepository<Core.Models.Store.Strategy>)}";
                 if (strategyRepoitory is null) throw new InvalidOperationException(message);
 
-                var collections = dbContext.Database.ListCollectionNames().ToList() ?? new List<string>();
+                var unitOfWork = scope.ServiceProvider.GetService<IUnitOfWork>();
+                message = $"Unsuccessful attempt to activate a service {nameof(IUnitOfWork)}";
+                if (unitOfWork is null) throw new InvalidOperationException(message);
 
-                //Jobs
-                if (!collections.Any(i => String.Equals(i, CollectionNames.Jobs)))
+                //Strategies
+                var turtles = strategyRepoitory
+                    .FirstOrDefaultAsync(i => i.Code == StrategyCode.Turtles.ToString())
+                    .Result;
+
+                if (turtles == null)
                 {
-                    dbContext.Database.CreateCollection(CollectionNames.Jobs);
-                    
-                    //Binance
-                    var binanceJob = new Core.Models.Store.Strategy
+                    turtles = new Core.Models.Store.Strategy
                     {
                         Code = StrategyCode.Turtles.ToString(),
-                        Name = "Turtles",
+                        Name = StrategyCode.Turtles.ToString(),
                         StartWithHost = false,
                     };
-                    var task = strategyRepoitory.CreateAsync(binanceJob);
-                    task.Wait();
+                    strategyRepoitory
+                        .AddAsync(turtles)
+                        .Wait();
+
+                    unitOfWork.CompleteAsync().Wait();
                 }
                 
             }

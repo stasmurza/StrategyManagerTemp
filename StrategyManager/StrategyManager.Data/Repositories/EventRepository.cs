@@ -4,6 +4,6 @@ namespace StrategyManager.Data.Repositories
 {
     public class EventRepository : RepositoryBase<Event>
     {
-        public EventRepository(IEventStoreDbContext dbContext) : base(dbContext.Events) { }
+        public EventRepository(StrategyManagerDbContext dbContext) : base(dbContext) { }
     }
 }

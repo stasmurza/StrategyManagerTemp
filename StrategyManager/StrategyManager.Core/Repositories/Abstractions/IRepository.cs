@@ -12,13 +12,17 @@ namespace StrategyManager.Core.Repositories.Abstractions
         void RemoveRange(TEntity[] entities);
         Task<TEntity?> GetByIdAsync(int id);
         Task<TEntity?> FirstOrDefaultAsync(
-            Expression<Func<TEntity, bool>>? wherePredicate = null,
+            Expression<Func<TEntity, bool>>? whereExpression = null,
             Expression<Func<TEntity, object>>[]? includes = null);
         Task<TEntity?> FirstOrDefaultAsync<TOrderBy>(
-            Expression<Func<TEntity, TOrderBy>> orderExpression,
+            Expression<Func<TEntity, bool>>? whereExpression = null,
+            Expression<Func<TEntity, TOrderBy>>? orderExpression = null,
             bool ascending = true,
-            Expression<Func<TEntity, bool>>? wherePredicate = null,
             Expression<Func<TEntity, object>>[]? includes = null);
-        Task<List<TEntity>> GetAllAsync(int skip = 0, int top = int.MaxValue, Expression<Func<TEntity, object>>[]? includes = null);
+        Task<List<TEntity>> GetAsync(
+            Expression<Func<TEntity, bool>>? whereExpression = null,
+            int skip = 0,
+            int top = int.MaxValue,
+            Expression<Func<TEntity, object>>[]? includes = null);
     }
 }

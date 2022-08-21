@@ -43,14 +43,15 @@ namespace StrategyManager.Data.Repositories
         }
 
         public async Task<TEntity?> FirstOrDefaultAsync<TOrderBy>(
-            Expression<Func<TEntity, TOrderBy>> orderExpression,
-            bool ascending = true,
             Expression<Func<TEntity, bool>>? wherePredicate = null,
+            Expression<Func<TEntity, TOrderBy>>? orderExpression = null,
+            bool ascending = true,
             Expression<Func<TEntity, object>>[]? includes = null)
         {
             var query = dbContext.Set<TEntity>().AsQueryable();
 
             if (wherePredicate != null) query = query.Where(wherePredicate);
+
             if (orderExpression != null)
             {
                 if (ascending) query = query.OrderBy(orderExpression);
@@ -82,9 +83,11 @@ namespace StrategyManager.Data.Repositories
             dbContext.Set<TEntity>().Update(entity);
         }
 
-        public Task<List<TEntity>> GetAllAsync(int skip = 0, int top = int.MaxValue, Expression<Func<TEntity, object>>[]? includes = null)
+        public Task<List<TEntity>> GetAsync(Expression<Func<TEntity, bool>>? wherePredicate = null, int skip = 0, int top = int.MaxValue, Expression<Func<TEntity, object>>[]? includes = null)
         {
             var query = dbContext.Set<TEntity>().AsQueryable();
+
+            if (wherePredicate != null) query = query.Where(wherePredicate);
 
             if (includes != null && includes.Any())
             {

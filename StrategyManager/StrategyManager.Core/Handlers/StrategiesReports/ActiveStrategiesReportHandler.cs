@@ -33,7 +33,7 @@ namespace StrategyManager.Core.Handlers.StrategiesReports
             var groups = strategies
                 .GroupBy(i => i.StrategyCode);
 
-            var repositoryStrategies = await repository.GetAllAsync();
+            var repositoryStrategies = await repository.GetAsync();
             var list = new List<StrategyDTO>();
             foreach (var group in groups)
             {

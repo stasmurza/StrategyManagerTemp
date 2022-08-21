@@ -31,7 +31,7 @@ namespace StrategyManager.Core.Services
             {
                 yield return new Strategy
                 {
-                    StrategyCode = strategy.Code,
+                    StrategyCode = strategy.StrategyCode,
                     TicketCode = strategy.InstrumentCode,
                     Status = strategy.Status,
                 };
@@ -49,8 +49,8 @@ namespace StrategyManager.Core.Services
             var parsed = Enum.TryParse(strategyCode, out StrategyCode code);
             if (!parsed) throw new ArgumentOutOfRangeException(nameof(strategyCode), $"Not expected value: {strategyCode}");
 
-            var strategy = strategyFactory.CreateStrategyByCode(code, ticketCode);
-            var task = Task.Run(async () => await strategy.StartAsync(new CancellationTokenSource()));
+            var strategy = strategyFactory.CreateStrategyByCode(code);
+            var task = Task.Run(async () => await strategy.StartAsync(ticketCode, new CancellationTokenSource()));
             strategies.TryAdd(key, (strategy, task));
 
             var continueTask = task.ContinueWith(async (t) =>

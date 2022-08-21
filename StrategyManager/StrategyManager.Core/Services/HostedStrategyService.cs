@@ -56,7 +56,7 @@ namespace StrategyManager.Core.Services
                 var message = $"Unsuccessful attempt to activate a service {nameof(IRepository<Strategy>)}";
                 if (repository is null) throw new InvalidOperationException(message);
 
-                var strategies = await repository.GetAllAsync();
+                var strategies = await repository.GetAsync();
                 foreach(var strategy in strategies)
                 {
                     if (!strategy.StartWithHost) continue;

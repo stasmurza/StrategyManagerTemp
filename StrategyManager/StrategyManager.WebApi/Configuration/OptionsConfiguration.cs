@@ -41,8 +41,8 @@ namespace StrategyManager.WebAPI.Configuration
         {
             services.Configure<DatabaseOptions>(options =>
             {
-                options.ConnectionString = config.GetValue<string>(EnvVariableNameConstants.EventStoreDbConnection);
-                options.DatabaseName = config.GetValue<string>(EnvVariableNameConstants.EventStoreDbName);
+                options.ConnectionString = config.GetValue<string>(EnvVariableNameConstants.StrategyManagerDbConnection);
+                options.DatabaseName = config.GetValue<string>(EnvVariableNameConstants.StrategyManagerDbName);
             });
 
             services.Configure<RabbitMQClientOptions>(options =>

@@ -16,9 +16,9 @@ namespace StrategyManager.Data
             base.OnModelCreating(modelBuilder);
 
             modelBuilder
-                .Entity<Ticket>()
+                .Entity<Trade>()
                 .HasOne<Order>(s => s.Order)
-                .WithMany(g => g.Tickets)
+                .WithMany(g => g.Trades)
                 .HasForeignKey(s => s.OrderId);
         }
     }

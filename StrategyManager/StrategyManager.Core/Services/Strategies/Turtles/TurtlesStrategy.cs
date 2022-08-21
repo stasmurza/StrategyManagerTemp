@@ -22,37 +22,39 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
         public String StrategyId { get => (this as IStrategy).StrategyId; }
         public event EventHandler<NewStatusEventArgs>? OnStatusChange;
 
-        private readonly InstrumentOptions instrumentOptions;
-        private IRepository<Event> eventRepository;
+        
         private IEntrySignalListener entrySignalListener;
         private IPendingOrderCreator entryOrderCreator;
         private IOrderHandler entryOrderHandler;
         private IExitSignalListener exitSignalListener;
         private IPendingOrderCreator exitOrderCreator;
         private IOrderHandler exitOrderHandler;
+        private IRepository<Event> eventRepository;
+        private readonly InstrumentOptions instrumentOptions;
         private readonly IMapper mapper;
         private readonly ILogger<TurtlesStrategy> logger;
         private bool disposed;
 
         public TurtlesStrategy(
-            IRepository<Event> eventRepository,
             IEntrySignalListener entrySignalListener,
             IEntryOrderCreator entryOrderCreator,
             IOrderHandler entryOrderHandler,
             IExitSignalListener exitSignalListener,
             IExitOrderCreator exitOrderCreator,
             IOrderHandler exitOrderHandler,
+            IRepository<Event> eventRepository,
             IOptions<InstrumentOptions> instrumentOptions,
             IMapper mapper,
             ILogger<TurtlesStrategy> logger)
         {
-            this.eventRepository = eventRepository;
+            
             this.entrySignalListener = entrySignalListener;
             this.entryOrderCreator = entryOrderCreator;
             this.entryOrderHandler = entryOrderHandler;
             this.exitSignalListener = exitSignalListener;
             this.exitOrderCreator = exitOrderCreator;
             this.exitOrderHandler = exitOrderHandler;
+            this.eventRepository = eventRepository;
             this.instrumentOptions = instrumentOptions.Value;
             this.mapper = mapper;
             this.logger = logger;
@@ -108,9 +110,9 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
         private async Task RunAsync()
         {
             var lastEvent = await eventRepository.FirstOrDefaultAsync(
+                i => i.EntityId == StrategyId,
                 i => i.Id,
-                true,
-                i => i.EntityId == StrategyId);
+                true);
 
             if (lastEvent is null)
             {

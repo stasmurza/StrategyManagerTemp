@@ -15,7 +15,7 @@ namespace StrategyManager.Core.Services
             this.serviceProvider = serviceProvider;
         }
 
-        public IStrategy CreateStrategyByCode(StrategyCode strategyCode, string ticketCode)
+        public IStrategy CreateStrategyByCode(StrategyCode strategyCode)
         {
             switch (strategyCode)
             {

@@ -7,7 +7,7 @@ namespace StrategyManager.Core.Services
     {
         public IEnumerable<MarketData> GetHistory(string instrumentCode, TimeFrame timeFrame, DateTime startDate, DateTime endDate)
         {
-            throw new NotImplementedException();
+            return Enumerable.Empty<MarketData>();
         }
         
         public void Dispose()
