@@ -21,6 +21,7 @@ namespace StrategyManager.Core.Mapping
             CreateMap<Models.Services.Strategies.Turtles.PendingOrderInput, Models.Store.Order>();
             CreateMap<Models.Store.Order, Models.DTOs.Strategies.OrderDTO>();
             CreateMap<Models.DTOs.Strategies.OrderDTO, TradingAPI.Contracts.Services.OrderManager.Orders.Order>();
+            CreateMap<Models.Store.Order, TradingAPI.Contracts.Services.OrderManager.Orders.Order>();
         }
     }
 }

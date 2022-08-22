@@ -193,12 +193,12 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
             await entryOrderCreator.CreatePendingOrderAsync(input);
         }
 
-        private void EntryOrderCreator_NewPendingOrder(object? sender, PendingOrderEventArgs e)
+        private async void EntryOrderCreator_NewPendingOrder(object? sender, PendingOrderEventArgs e)
         {
             OnEventHandler();
             StrategyStep = StrategyStep.HandlingEntryOrder;
-            var input = new OrderHandlerInput(e.StrategyId, e.Order);
-            entryOrderHandler.HandleOrder(input);
+            var input = new OrderHandlerInput(e.StrategyId, e.OrderGuid);
+            await entryOrderHandler.HandleOrderAsync(input);
         }
 
         private void EntryOrderHandler_OrderFilled(object? sender, OrderHandlerEventArgs e)
@@ -238,12 +238,12 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
             task.Wait();
         }
 
-        private void ExitOrderCreator_NewPendingOrder(object? sender, PendingOrderEventArgs e)
+        private async void ExitOrderCreator_NewPendingOrder(object? sender, PendingOrderEventArgs e)
         {
             OnEventHandler();
             StrategyStep = StrategyStep.HandlingExitOrder;
-            var input = new OrderHandlerInput(StrategyId, e.Order);
-            exitOrderHandler.HandleOrder(input);
+            var input = new OrderHandlerInput(StrategyId, e.OrderGuid);
+            await exitOrderHandler.HandleOrderAsync(input);
         }
 
         private void ExitOrderHandler_OrderFilled(object? sender, OrderHandlerEventArgs e)

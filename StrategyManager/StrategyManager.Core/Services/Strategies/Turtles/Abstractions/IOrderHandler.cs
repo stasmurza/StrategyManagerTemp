@@ -11,7 +11,7 @@ namespace StrategyManager.Core.Services.Strategies.Turtles.Abstractions
         /// If such order exist, event with actual state will be generated
         /// Otherwise new order will be created, with subscription to events of order
         /// </summary>
-        public void HandleOrder(OrderHandlerInput input);
+        public async Task HandleOrderAsync(OrderHandlerInput input);
 
         public event EventHandler<OrderHandlerEventArgs>? OrderCreated;
         public event EventHandler<OrderHandlerEventArgs>? OrderRejected;

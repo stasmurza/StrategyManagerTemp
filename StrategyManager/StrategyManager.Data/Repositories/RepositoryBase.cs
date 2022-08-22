@@ -19,8 +19,14 @@ namespace StrategyManager.Data.Repositories
             await dbContext.Set<TEntity>().AddAsync(entity);
         }
 
-        public Task<TEntity?> GetByIdAsync(int id)
+        public Task<TEntity?> GetByIdAsync(int id, Expression<Func<TEntity, object>>[]? includes = null)
         {
+            var query = dbContext.Set<TEntity>().AsQueryable();
+            if (includes != null && includes.Any())
+            {
+                query = includes.Aggregate(query, (q, include) => q.Include(include));
+            }
+
             return dbContext.Set<TEntity>().FirstOrDefaultAsync(x => x.Id == id);
         }
 

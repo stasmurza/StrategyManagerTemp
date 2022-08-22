@@ -4,7 +4,7 @@ namespace StrategyManager.Core.Models.Store
 {
     public class Order : Entity
     {
-        public new string Id { get; set; } = String.Empty;
+        public string Guid { get; set; } = String.Empty;
         public string InstrumentCode { get; set; } = String.Empty;
         public string StrategyId { get; set; } = String.Empty;
         public Direction Direction { get; set; }

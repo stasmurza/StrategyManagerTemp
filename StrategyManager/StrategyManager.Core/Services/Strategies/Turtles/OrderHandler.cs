@@ -2,7 +2,10 @@
 using Microsoft.Extensions.Logging;
 using StrategyManager.Core.Models.Services.Strategies;
 using StrategyManager.Core.Models.Services.Strategies.Turtles;
+using StrategyManager.Core.Models.Store.Events;
+using StrategyManager.Core.Repositories.Abstractions;
 using StrategyManager.Core.Services.Strategies.Turtles.Abstractions;
+using System.Text.Json;
 using TradingAPI.API.Services;
 using TradingAPI.Contracts.Services.Instruments;
 using TradingAPI.Contracts.Services.OrderManager;
@@ -18,38 +21,52 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
         public event EventHandler<OrderHandlerEventArgs>? OrderCancelled;
         public event EventHandler<OrderHandlerEventArgs>? OrderFilled;
         public event EventHandler<NewStatusEventArgs>? OnStatusChange;
-        public EventHandler<OrderStateChangedEventArgs>? OrderStateChanged;
 
+        private EventHandler<OrderStateChangedEventArgs>? OrderStateChangedHandler;
+        private EventHandler<OrderHandlerEventArgs>? OrderFilledHandler;
         private string StrategyId { get; set; } = String.Empty;
+        private readonly IRepository<Event> eventRepository;
+        private IRepository<Models.Store.Order> orderRepository;
+        private readonly IUnitOfWork unitOfWork;
         private readonly IOrderManager orderManager;
         private readonly IMapper mapper;
         private readonly ILogger<OrderHandler> logger;
         private bool disposed;
 
         public OrderHandler(
+            IRepository<Event> eventRepository,
+            IRepository<Models.Store.Order> orderRepository,
+            IUnitOfWork unitOfWork,
             IOrderManager orderManager,
             IMapper mapper,
             ILogger<OrderHandler> logger)
         {
+            this.eventRepository = eventRepository;
+            this.orderRepository = orderRepository;
+            this.unitOfWork = unitOfWork;
             this.orderManager = orderManager;
             this.mapper = mapper;
             this.logger = logger;
-            orderManager.OrderStateChanged += OrderStateChanged;
+            orderManager.OrderStateChanged += OrderStateChangedHandler;
             OnStatusChange += OrderHandler_OnStatusChange;
+            OrderFilled += OrderFilledHandler;
+            OrderFilledHandler += OrderHandler_OrderFilled;
         }
 
         /// <summary>
         /// Idempotent order handler
         /// </summary>
-        public void HandleOrder(OrderHandlerInput input)
+        public async Task HandleOrderAsync(OrderHandlerInput input)
         {
             if (OnStatusChange != null) OnStatusChange(this, new NewStatusEventArgs(StrategyStatus.Starting));
             
-            OrderStateChanged += OrderManager_OrderStateChanged;
+            OrderStateChangedHandler += OrderManager_OrderStateChanged;
             StrategyId = input.StrategyId;
 
-            var exchangeOrder = this.orderManager.GetOrderById(input.Order.Id);
-            if (exchangeOrder == null) RegisterOrder(input);
+            var order = await orderRepository.FirstOrDefaultAsync(i => i.Guid == input.OrderGuid);
+            if (order is null) throw new ArgumentNullException(nameof(order));
+            var exchangeOrder = this.orderManager.GetOrderById(order.Id.ToString());
+            if (exchangeOrder == null) RegisterOrder(order);
             else RaiseEventWithOrderState((Order)exchangeOrder);
 
             if (OnStatusChange != null) OnStatusChange(this, new NewStatusEventArgs(StrategyStatus.Running));
@@ -83,15 +100,15 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
             OrderManager_OrderStateChanged(this, args);
         }
 
-        private void RegisterOrder(OrderHandlerInput input)
+        private void RegisterOrder(Models.Store.Order pendingOrder)
         {
             var instrument = new Instrument
             {
-                Code = input.Order.InstrumentCode,
+                Code = pendingOrder.InstrumentCode,
             };
 
-            var order = mapper.Map<Order>(input.Order);
-            order.OrderType = TradingAPI.Contracts.Services.OrderManager.Orders.OrderType.Limit;
+            var order = mapper.Map<Order>(pendingOrder);
+            order.OrderType = OrderType.Limit;
             order.Instrument = instrument;
 
             orderManager.RegisterOrder(order);
@@ -101,13 +118,27 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
         {
             if (Status == StrategyStatus.Stopping && Status == StrategyStatus.Stopped) return;
             if (OnStatusChange != null) OnStatusChange(this, new NewStatusEventArgs(StrategyStatus.Stopping));
-            OrderStateChanged = null;
+            OrderStateChangedHandler -= OrderManager_OrderStateChanged;
+            OrderFilledHandler -= OrderHandler_OrderFilled;
             if (OnStatusChange != null) OnStatusChange(this, new NewStatusEventArgs(StrategyStatus.Stopped));
         }
 
         private void OrderHandler_OnStatusChange(object? sender, NewStatusEventArgs e)
         {
             LogInformation($"New status {e.Status}");
+        }
+
+        private async void OrderHandler_OrderFilled(object? sender, OrderHandlerEventArgs e)
+        {
+            var newEvent = new Event
+            {
+                EntityType = EntityType.TurtlesStrategy,
+                EntityId = StrategyId,
+                EventType = JsonSerializer.Serialize(EventType.NewEntryPendingOrder),
+                EventData = JsonSerializer.Serialize(e),
+            };
+            await eventRepository.AddAsync(newEvent);
+            await unitOfWork.CompleteAsync();
         }
 
         private void LogInformation(string message, params object[] args)
@@ -131,8 +162,11 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
             {
                 // TODO: dispose managed state (managed objects (resources)).
                 Stop();
-                orderManager.OrderStateChanged -= OrderStateChanged;
+                OrderStateChangedHandler = null;
+                orderManager.OrderStateChanged -= OrderStateChangedHandler;
                 OnStatusChange -= OrderHandler_OnStatusChange;
+                OrderFilledHandler = null;
+                OrderFilled -= OrderFilledHandler;
             }
 
             // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.

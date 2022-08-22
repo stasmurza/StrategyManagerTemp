@@ -4,7 +4,8 @@ namespace StrategyManager.Core.Models.DTOs.Strategies
 {
     public class OrderDTO
     {
-        public string Id { get; set; } = String.Empty;
+        public int Id { get; set; }
+        public string Guid { get; set; } = String.Empty;
         public string InstrumentCode { get; set; } = String.Empty;
         public string StrategyId { get; set; } = String.Empty;
         public Direction Direction { get; set; }

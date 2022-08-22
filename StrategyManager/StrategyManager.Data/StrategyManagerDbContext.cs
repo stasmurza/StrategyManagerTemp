@@ -17,6 +17,11 @@ namespace StrategyManager.Data
             base.OnModelCreating(modelBuilder);
 
             modelBuilder
+                .Entity<Order>()
+                .HasIndex(u => u.Guid)
+                    .IsUnique();
+
+            modelBuilder
                 .Entity<Trade>()
                 .HasOne<Order>(s => s.Order)
                 .WithMany(g => g.Trades)

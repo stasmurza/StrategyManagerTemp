@@ -12,22 +12,30 @@ namespace StrategyManager.Core.Handlers.Strategies.Tickets
     public class AddTicketHandler : IRequestHandler<AddTicketInput, Unit> 
     {
         private readonly IRepository<Strategy> repository;
+        private readonly IUnitOfWork unitOfWork;
         private readonly IMapper mapper;
         private readonly ILogger logger;
 
         public AddTicketHandler(
             IRepository<Strategy> repository,
+            IUnitOfWork unitOfWork,
             IMapper mapper,
             ILogger<AddTicketHandler> logger)
         {
             this.repository = repository;
+            this.unitOfWork = unitOfWork;
             this.mapper = mapper;
             this.logger = logger;
         }
 
         public async Task<Unit> Handle(AddTicketInput input, CancellationToken cancellationToken)
         {
-            var strategy = await repository.GetByIdAsync(input.StrategyId);
+            var include = new Expression<Func<Strategy, object>>[]
+            {
+                strategy => strategy.Tickets,
+            };
+
+            var strategy = await repository.GetByIdAsync(input.StrategyId, );
             if (strategy == null)
             {
                 var message = $"Strategy with id {input.StrategyId} is not found";
@@ -51,6 +59,7 @@ namespace StrategyManager.Core.Handlers.Strategies.Tickets
             strategy.Tickets.Add(ticket);
             
             repository.Update(strategy);
+            await unitOfWork.CompleteAsync();
 
             return Unit.Value;
         }

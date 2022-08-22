@@ -4,13 +4,13 @@ namespace StrategyManager.Core.Models.Services.Strategies.Turtles
 {
     public class PendingOrderEventArgs
     {
-        public string StrategyId { get; set; }
-        public OrderDTO Order { get; set; }
+        public string StrategyId { get; private set; }
+        public string OrderGuid { get; private set; }
 
-        public PendingOrderEventArgs(string strategyId, OrderDTO order)
+        public PendingOrderEventArgs(string strategyId, string orderGuid)
         {
             StrategyId = strategyId;
-            Order = order;
+            OrderGuid = orderGuid;
         }
     }
 }

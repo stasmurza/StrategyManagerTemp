@@ -46,12 +46,11 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
                 OnStatusChange(this, new NewStatusEventArgs(StrategyStatus.Running));
             }
             var order = mapper.Map<Order>(input);
-            order.Id = Guid.NewGuid().ToString();
+            order.Guid = Guid.NewGuid().ToString();
             order.DateTime = DateTime.Now;
             await orderRepository.AddAsync(order);
 
-            var orderDTO = mapper.Map<Models.DTOs.Strategies.OrderDTO>(input);
-            var args = new PendingOrderEventArgs(order.StrategyId, orderDTO);
+            var args = new PendingOrderEventArgs(order.StrategyId, order.Guid);
             var newEvent = new Event
             {
                 EntityType = EntityType.TurtlesStrategy,
@@ -60,7 +59,6 @@ namespace StrategyManager.Core.Services.Strategies.Turtles
                 EventData = JsonSerializer.Serialize(args),
             };
             await eventRepository.AddAsync(newEvent);
-
             await unitOfWork.CompleteAsync();
 
             Stop();
